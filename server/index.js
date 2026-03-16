@@ -171,13 +171,19 @@ function buildGameInfo() {
     odds,
   };
   if (gameState.status === 'started' || gameState.status === 'settled') {
-    info.redScore = gameState.redScore;
-    info.blueScore = gameState.blueScore;
-    const rs = parseInt(gameState.redScore);
-    const bs = parseInt(gameState.blueScore);
+    const rs = typeof gameState.redScore === 'number' ? gameState.redScore : parseInt(gameState.redScore);
+    const bs = typeof gameState.blueScore === 'number' ? gameState.blueScore : parseInt(gameState.blueScore);
+    info.redScore = !isNaN(rs) ? rs : gameState.redScore;
+    info.blueScore = !isNaN(bs) ? bs : gameState.blueScore;
     if (!isNaN(rs) && !isNaN(bs)) {
       info.winSide = rs > bs ? 'red' : rs < bs ? 'blue' : null;
       info.result = rs > bs ? '红方胜' : rs < bs ? '蓝方胜' : '平局';
+      info.totalScore = rs + bs;
+      info.scoreDiff = Math.abs(rs - bs);
+    }
+    if (gameState.status === 'settled') {
+      info.elementWinner = gameState.elementWinner ?? null;
+      info.totalKnockdowns = gameState.totalKnockdowns;
     }
   }
   if (gameState.status === 'waiting' && lastSettledMatch) {
@@ -670,6 +676,7 @@ io.on('connection', (socket) => {
     gameState.fireBalls = fire;
     gameState.windBalls = wind;
     gameState.totalKnockdowns = knockdowns;
+    gameState.elementWinner = elementWinner;
     gameState.status = 'settled';
 
     const odds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
@@ -1103,6 +1110,7 @@ app.post('/api/admin/settle', (req, res) => {
   gameState.fireBalls = fire;
   gameState.windBalls = wind;
   gameState.totalKnockdowns = knockdowns;
+  gameState.elementWinner = elementWinner;
   gameState.status = 'settled';
 
   const odds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);

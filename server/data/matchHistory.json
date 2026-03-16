@@ -10,5 +10,17 @@
     "redRatingChange": -1,
     "blueRatingChange": 1,
     "result": "蓝方胜"
+  },
+  {
+    "time": "2026-03-16T09:08:42.719Z",
+    "matchName": "比赛test",
+    "gameType": "hockey",
+    "redPlayer": null,
+    "bluePlayer": "郭郭",
+    "redScore": 32,
+    "blueScore": 33,
+    "redRatingChange": 0,
+    "blueRatingChange": 0,
+    "result": "平局"
   }
 ]

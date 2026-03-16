@@ -46,14 +46,26 @@ function JoinPage({ user, setUser }) {
 
   // 初始加载：从 REST 获取当前状态
   useEffect(() => {
-    fetch('/api/game')
-      .then(r => r.json())
-      .then(data => {
-        setGameInfo(data.gameInfo);
-        setContestStatus(data.contestStatus || {});
-      })
-      .catch(() => {});
+    const fetchGame = () =>
+      fetch('/api/game')
+        .then(r => r.json())
+        .then(data => {
+          setGameInfo(data.gameInfo);
+          setContestStatus(data.contestStatus || {});
+        })
+        .catch(() => {});
+    fetchGame();
   }, []);
+
+  // 当收到 settled 状态时，主动拉取最新 gameInfo 确保分数正确
+  useEffect(() => {
+    if (gameInfo?.status === 'settled' && (gameInfo?.redScore == null || gameInfo?.blueScore == null)) {
+      fetch('/api/game')
+        .then(r => r.json())
+        .then(data => data.gameInfo && setGameInfo(data.gameInfo))
+        .catch(() => {});
+    }
+  }, [gameInfo?.status, gameInfo?.redScore, gameInfo?.blueScore]);
 
   // 进入参赛页时刷新用户信息（含竞猜币、选手积分）
   useEffect(() => {
@@ -239,21 +251,21 @@ function JoinPage({ user, setUser }) {
                 <div className="mq-side-buttons mq-join-sides">
                   <button
                     type="button"
-                    className={`mq-side-btn red ${selectedSide === 'red' ? 'selected' : ''}`}
-                    onClick={() => redAvailable && setSelectedSide('red')}
-                    disabled={!redAvailable}
-                  >
-                    🔴 红方
-                    {!redAvailable && <span className="mq-join-taken">（已占）</span>}
-                  </button>
-                  <button
-                    type="button"
                     className={`mq-side-btn blue ${selectedSide === 'blue' ? 'selected' : ''}`}
                     onClick={() => blueAvailable && setSelectedSide('blue')}
                     disabled={!blueAvailable}
                   >
                     🔵 蓝方
                     {!blueAvailable && <span className="mq-join-taken">（已占）</span>}
+                  </button>
+                  <button
+                    type="button"
+                    className={`mq-side-btn red ${selectedSide === 'red' ? 'selected' : ''}`}
+                    onClick={() => redAvailable && setSelectedSide('red')}
+                    disabled={!redAvailable}
+                  >
+                    🔴 红方
+                    {!redAvailable && <span className="mq-join-taken">（已占）</span>}
                   </button>
                 </div>
                 <button
