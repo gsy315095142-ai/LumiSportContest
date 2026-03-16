@@ -1,8 +1,8 @@
 {
   "郭郭": {
     "name": "郭郭",
-    "coins": 270,
-    "totalWinnings": 0,
+    "coins": 272,
+    "totalWinnings": 22,
     "lastCheckin": "2026-03-10",
     "adWatchedToday": 0,
     "lastAdDate": null,
@@ -34,6 +34,34 @@
         "amount": 30,
         "reason": "竞猜下注 · 001 第1局",
         "balance": 270
+      },
+      {
+        "time": "2026-03-16T09:27:44.479Z",
+        "type": "spend",
+        "amount": 20,
+        "reason": "竞猜下注 · 001 第1局",
+        "balance": 250
+      },
+      {
+        "time": "2026-03-16T09:27:48.743Z",
+        "type": "gain",
+        "amount": 20,
+        "reason": "取消下注退还 · 001 第1局",
+        "balance": 270
+      },
+      {
+        "time": "2026-03-16T09:27:54.619Z",
+        "type": "spend",
+        "amount": 20,
+        "reason": "竞猜下注 · 001 第1局",
+        "balance": 250
+      },
+      {
+        "time": "2026-03-16T09:28:06.834Z",
+        "type": "gain",
+        "amount": 22,
+        "reason": "竞猜赢得 · 001 第1局",
+        "balance": 272
       }
     ],
     "rating": 1499,
@@ -51,6 +79,29 @@
         "totalWon": 0,
         "netResult": 0,
         "details": []
+      },
+      {
+        "time": "2026-03-16T09:28:06.834Z",
+        "matchName": "001",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 33,
+        "redScore": 32,
+        "round": 1,
+        "totalBetted": 20,
+        "totalWon": 22,
+        "netResult": 22,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 20,
+            "actual": "蓝方胜",
+            "result": "猜中",
+            "won": 22
+          }
+        ]
       }
     ]
   },
