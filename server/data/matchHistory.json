@@ -1,0 +1,14 @@
+[
+  {
+    "time": "2026-03-16T08:32:45.203Z",
+    "matchName": "魔法冰球第一局",
+    "gameType": "hockey",
+    "redPlayer": "郭郭",
+    "bluePlayer": "虾饺",
+    "redScore": 5,
+    "blueScore": 6,
+    "redRatingChange": -1,
+    "blueRatingChange": 1,
+    "result": "蓝方胜"
+  }
+]

@@ -2187,6 +2187,97 @@ footer p { margin: 5px 0; }
   font-size: 14px;
 }
 
+.sim-players-odds-display {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sim-players-odds-display.sim-players-horizontal {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.sim-player-side {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.sim-player-side.blue { align-items: flex-start; text-align: left; }
+.sim-player-side.red { align-items: flex-end; text-align: right; }
+
+.sim-player-side .sim-player-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sim-player-side .sim-player-name {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.sim-player-side .sim-player-rating {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.sim-player-side .sim-odds-tag {
+  font-size: 14px;
+  color: #ffd93d;
+  font-weight: 600;
+}
+
+.sim-vs-sep {
+  flex-shrink: 0;
+  align-self: center;
+  color: #666;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0 8px;
+}
+
+.sim-players-horizontal .sim-odds-hint {
+  width: 100%;
+  margin: 8px 0 0;
+}
+
+.sim-player-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.sim-player-line.blue .sim-player-label { color: #54a0ff; }
+.sim-player-line.red .sim-player-label { color: #ff6b6b; }
+
+.sim-player-info {
+  flex: 1;
+  color: #ccc;
+}
+
+.sim-odds-tag {
+  color: #ffd93d;
+  font-weight: 600;
+}
+
+.sim-odds-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
 .sim-divider {
   width: 100%;
   height: 1px;

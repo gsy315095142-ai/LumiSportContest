@@ -28,6 +28,23 @@
         "reason": "每日签到",
         "balance": 300
       }
+    ],
+    "rating": 1499,
+    "history": [
+      {
+        "time": "2026-03-16T08:32:45.202Z",
+        "matchName": "魔法冰球第一局",
+        "gameType": "hockey",
+        "redPlayer": "郭郭",
+        "bluePlayer": "虾饺",
+        "blueScore": 6,
+        "redScore": 5,
+        "round": 1,
+        "totalBetted": 0,
+        "totalWon": 0,
+        "netResult": 0,
+        "details": []
+      }
     ]
   },
   "Suki": {
@@ -45,7 +62,8 @@
         "reason": "新用户注册奖励",
         "balance": 100
       }
-    ]
+    ],
+    "rating": 1500
   },
   "Suyan": {
     "name": "Suyan",
@@ -178,7 +196,8 @@
           }
         ]
       }
-    ]
+    ],
+    "rating": 1500
   },
   "TK": {
     "name": "TK",
@@ -310,7 +329,8 @@
           }
         ]
       }
-    ]
+    ],
+    "rating": 1500
   },
   "LINP": {
     "name": "LINP",
@@ -436,7 +456,8 @@
           }
         ]
       }
-    ]
+    ],
+    "rating": 1500
   },
   "纽扣": {
     "name": "纽扣",
@@ -453,7 +474,8 @@
         "reason": "新用户注册奖励",
         "balance": 100
       }
-    ]
+    ],
+    "rating": 1500
   },
   "钰": {
     "name": "钰",
@@ -578,7 +600,8 @@
           }
         ]
       }
-    ]
+    ],
+    "rating": 1500
   },
   "Kimi": {
     "name": "Kimi",
@@ -671,7 +694,8 @@
           }
         ]
       }
-    ]
+    ],
+    "rating": 1500
   },
   "suyan": {
     "name": "suyan",
@@ -787,6 +811,25 @@
             "lost": 10
           }
         ]
+      }
+    ],
+    "rating": 1500
+  },
+  "虾饺": {
+    "name": "虾饺",
+    "coins": 100,
+    "totalWinnings": 0,
+    "rating": 1501,
+    "lastCheckin": null,
+    "adWatchedToday": 0,
+    "lastAdDate": null,
+    "coinLog": [
+      {
+        "time": "2026-03-16T08:32:15.183Z",
+        "type": "gain",
+        "amount": 100,
+        "reason": "新用户注册奖励",
+        "balance": 100
       }
     ]
   }

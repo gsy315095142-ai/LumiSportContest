@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { QRCodeSVG } from 'qrcode.react';
-import { oddsData } from '../data/rulesData';
-
-const TIERS = ['新手', '青铜', '白银', '黄金', '钻石', '铂金', '王者'];
 
 function Simulation() {
   const socketRef = useRef(null);
@@ -16,11 +13,9 @@ function Simulation() {
   const [confirmNext, setConfirmNext] = useState(false);
   const [bottomTab, setBottomTab] = useState('bets');
 
-  // 本地表单
+  // 本地表单（选手由手机端参赛确认，PC 端仅配置赛事名和玩法）
   const [gameType, setGameType] = useState('hockey');
   const [matchName, setMatchName] = useState('');
-  const [redTier, setRedTier] = useState('新手');
-  const [blueTier, setBlueTier] = useState('新手');
   const [redScore, setRedScore] = useState('');
   const [blueScore, setBlueScore] = useState('');
   const [iceBalls, setIceBalls] = useState('');
@@ -56,8 +51,6 @@ function Simulation() {
       setGameInfo(info);
       if (info.gameType) setGameType(info.gameType);
       if (info.matchName !== undefined) setMatchName(info.matchName);
-      if (info.redTier) setRedTier(info.redTier);
-      if (info.blueTier) setBlueTier(info.blueTier);
       if (info.status === 'betting' || info.status === 'waiting') {
         setResultData(null);
       }
@@ -68,8 +61,6 @@ function Simulation() {
       setGameInfo(info);
       if (info.gameType) setGameType(info.gameType);
       if (info.matchName !== undefined) setMatchName(info.matchName);
-      if (info.redTier) setRedTier(info.redTier);
-      if (info.blueTier) setBlueTier(info.blueTier);
       setResultData(null);
       setRedScore('');
       setBlueScore('');
@@ -96,11 +87,11 @@ function Simulation() {
   const status = gameInfo?.status || 'waiting';
 
   const handleConfigUpdate = () => {
-    socketRef.current?.emit('game:config', { matchName, redTier, blueTier, gameType });
+    socketRef.current?.emit('game:config', { matchName, gameType });
   };
 
   const handleOpenBetting = () => {
-    socketRef.current?.emit('game:config', { matchName, redTier, blueTier, gameType });
+    socketRef.current?.emit('game:config', { matchName, gameType });
     socketRef.current?.emit('game:openBetting');
   };
 
@@ -122,11 +113,12 @@ function Simulation() {
   const activeGameType = gameInfo?.gameType || gameType;
   const isHockey = activeGameType === 'hockey';
 
-  // 当前赔率
-  const ri = TIERS.indexOf(gameInfo?.redTier || redTier);
-  const bi = TIERS.indexOf(gameInfo?.blueTier || blueTier);
-  const currentRedOdds = oddsData.matrix[ri]?.[bi] || '—';
-  const currentBlueOdds = oddsData.matrix[bi]?.[ri] || '—';
+  // 当前赔率与选手（由服务端按积分计算）
+  const odds = gameInfo?.odds || { red: 1.5, blue: 1.5 };
+  const redPlayer = gameInfo?.redPlayer;
+  const bluePlayer = gameInfo?.bluePlayer;
+  const redRating = gameInfo?.redRating ?? 0;
+  const blueRating = gameInfo?.blueRating ?? 0;
 
   const statusLabel = {
     waiting: '⏳ 等待配置',
@@ -205,32 +197,21 @@ function Simulation() {
             />
           </div>
 
-          <div className="sim-form-row">
-            <label>蓝方段位</label>
-            <select
-              value={blueTier}
-              onChange={e => { setBlueTier(e.target.value); }}
-              onBlur={handleConfigUpdate}
-              disabled={status !== 'waiting'}
-            >
-              {TIERS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          <div className="sim-form-row">
-            <label>红方段位</label>
-            <select
-              value={redTier}
-              onChange={e => { setRedTier(e.target.value); }}
-              onBlur={handleConfigUpdate}
-              disabled={status !== 'waiting'}
-            >
-              {TIERS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          <div className="sim-odds-display">
-            <span>当前赔率：蓝方 <strong className="blue-text">×{currentBlueOdds}</strong> | 红方 <strong className="red-text">×{currentRedOdds}</strong></span>
+          <div className="sim-players-odds-display sim-players-horizontal">
+            <div className="sim-player-side blue">
+              <div className="sim-player-label">🔵 蓝方</div>
+              <div className="sim-player-name">{bluePlayer || '等待选手报名'}</div>
+              <div className="sim-player-rating">{blueRating}分</div>
+              <div className="sim-odds-tag">×{odds.blue}</div>
+            </div>
+            <span className="sim-vs-sep">VS</span>
+            <div className="sim-player-side red">
+              <div className="sim-player-label">🔴 红方</div>
+              <div className="sim-player-name">{redPlayer || '等待选手报名'}</div>
+              <div className="sim-player-rating">{redRating}分</div>
+              <div className="sim-odds-tag">×{odds.red}</div>
+            </div>
+            <p className="sim-odds-hint">选手由手机端【我要参赛】确认，赔率按积分自动计算</p>
           </div>
         </div>
 

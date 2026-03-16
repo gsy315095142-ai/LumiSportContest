@@ -216,9 +216,14 @@ function QuizPage({ user, setUser }) {
   const today = new Date().toISOString().slice(0, 10);
   const checkedIn = user.lastCheckin === today;
   const status = gameInfo?.status || 'waiting';
-  const canBet = status === 'betting';
+  const amIParticipating = gameInfo?.redPlayer === user?.name || gameInfo?.bluePlayer === user?.name;
+  const canBet = status === 'betting' && !amIParticipating;
   const odds = gameInfo?.odds || { red: 1.5, blue: 1.5 };
   const isHockey = (gameInfo?.gameType || 'hockey') === 'hockey';
+  const redPlayer = gameInfo?.redPlayer;
+  const bluePlayer = gameInfo?.bluePlayer;
+  const redRating = gameInfo?.redRating ?? 0;
+  const blueRating = gameInfo?.blueRating ?? 0;
 
   // 已下注汇总
   let totalBetted = 0;
@@ -306,7 +311,7 @@ function QuizPage({ user, setUser }) {
                     </div>
                     <div className="mq-history-match">
                       {h.gameType === 'hockey' ? '🏒' : '🥊'} {h.matchName}
-                      <span className="mq-history-vs">🔵{h.blueTier} {h.blueScore} : {h.redScore} {h.redTier}🔴</span>
+                      <span className="mq-history-vs">🔵{h.bluePlayer || '—'} {h.blueScore} : {h.redScore} {h.redPlayer || '—'}🔴</span>
                     </div>
                     <div className="mq-history-details">
                       {h.details.map((d, j) => {
@@ -382,21 +387,31 @@ function QuizPage({ user, setUser }) {
         {status !== 'waiting' && (
           <>
             <div className="mq-match-name">{isHockey ? '🏒' : '🥊'} {gameInfo?.matchName || '竞猜赛事'}</div>
-            <div className="mq-tiers">
-              <span className="blue-text">🔵 {gameInfo?.blueTier}</span>
-              <span> VS </span>
-              <span className="red-text">{gameInfo?.redTier} 🔴</span>
-            </div>
-            <div className="mq-odds-line">
-              <span className="blue-text">蓝方 ×{odds.blue}</span>
-              <span className="mq-odds-sep">|</span>
-              <span className="red-text">×{odds.red} 红方</span>
+            <div className="mq-players-odds">
+              <div className="mq-player-side blue">
+                <div className="mq-player-label">🔵 蓝方</div>
+                <div className="mq-player-name">{bluePlayer || '等待选手报名'}</div>
+                <div className="mq-player-rating">{blueRating}分</div>
+                <div className="mq-odds-tag">×{odds.blue}</div>
+              </div>
+              <span className="mq-vs-sep">VS</span>
+              <div className="mq-player-side red">
+                <div className="mq-player-label">🔴 红方</div>
+                <div className="mq-player-name">{redPlayer || '等待选手报名'}</div>
+                <div className="mq-player-rating">{redRating}分</div>
+                <div className="mq-odds-tag">×{odds.red}</div>
+              </div>
             </div>
           </>
         )}
         {status === 'betting' && <div className="mq-status-msg betting">🎯 下注中 — 请在比赛开始前完成下注</div>}
         {status === 'started' && <div className="mq-status-msg started">{isHockey ? '🏒' : '🥊'} 比赛进行中 — 下注已锁定</div>}
         {status === 'settled' && <div className="mq-status-msg settled">🏆 已开奖</div>}
+        {amIParticipating && status === 'betting' && (
+          <div className="mq-participant-block">
+            <p className="mq-participant-msg">您已报名参赛，要先撤销参赛才能参与竞猜</p>
+          </div>
+        )}
       </div>
 
       {/* 开奖结果（个人） */}

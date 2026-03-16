@@ -1,5 +1,69 @@
 /* ========== 手机端全局 ========== */
 
+.mobile-app-with-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+}
+
+/* 可滚动内容区：预留底部导航高度，避免被遮挡 */
+.mobile-tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0));
+}
+
+/* ========== 底部导航（固定底部，滚动时始终可见） ========== */
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1000;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 24px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+  border-radius: 12px;
+}
+
+.mobile-nav-btn:active {
+  transform: scale(0.96);
+}
+
+.mobile-nav-btn.active {
+  color: #fff;
+  background: rgba(108, 99, 255, 0.25);
+}
+
+.mobile-nav-icon {
+  font-size: 22px;
+}
+
+.mobile-nav-label {
+  font-weight: 500;
+}
+
 .mobile-login,
 .mobile-quiz {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -118,6 +182,7 @@
 
 .mq-username { font-weight: bold; color: #fff; }
 .mq-coins { color: #ffd93d; font-weight: bold; }
+.mq-rating { color: #6bcb77; font-weight: bold; }
 .mq-betted { color: #ff9f43; font-size: 12px; }
 
 .mq-actions {
@@ -424,6 +489,111 @@
 .mq-tiers {
   font-size: 18px;
   margin-bottom: 8px;
+}
+
+/* 选手积分与赔率展示（左蓝方 VS 右红方，分层排版） */
+.mq-players-odds {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 8px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+
+.mq-player-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.mq-player-side.blue { align-items: flex-start; text-align: left; }
+.mq-player-side.red { align-items: flex-end; text-align: right; }
+
+.mq-player-side .mq-player-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mq-player-side.blue .mq-player-label { color: #54a0ff; }
+.mq-player-side.red .mq-player-label { color: #ff6b6b; }
+
+.mq-player-side .mq-player-name {
+  font-size: 14px;
+  color: #e0e0e0;
+  font-weight: 500;
+  min-height: 20px;
+}
+
+.mq-player-side .mq-player-rating {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.mq-player-side .mq-odds-tag {
+  font-size: 14px;
+  color: #ffd93d;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.mq-player-side .mq-player-rating.mq-score {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mq-player-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.mq-player-line.blue .mq-player-label { color: #54a0ff; }
+.mq-player-line.red .mq-player-label { color: #ff6b6b; }
+
+.mq-player-info {
+  flex: 1;
+  color: #ccc;
+  font-size: 13px;
+}
+
+.mq-odds-tag {
+  color: #ffd93d;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mq-vs-sep {
+  flex-shrink: 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0 6px;
+}
+
+.mq-participant-block {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(233, 69, 96, 0.15);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 10px;
+}
+
+.mq-participant-msg {
+  margin: 0;
+  font-size: 14px;
+  color: #ff8fa3;
+  text-align: center;
 }
 
 .mq-status-msg {
@@ -877,4 +1047,79 @@
 /* 竞猜币闪烁反馈 */
 .mq-coins {
   transition: color 0.3s, text-shadow 0.3s;
+}
+
+/* ========== 参赛页 ========== */
+
+.mq-join-status {
+  padding: 16px 24px;
+}
+
+.mq-game-type-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+  color: #e0e0e0;
+}
+
+.mq-join-confirmed {
+  margin-top: 16px;
+  padding: 20px;
+  background: rgba(107, 203, 119, 0.1);
+  border: 1px solid rgba(107, 203, 119, 0.3);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.mq-join-confirmed-msg {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+.mq-btn-join-cancel {
+  display: inline-block;
+}
+
+.mq-join-select {
+  margin-top: 16px;
+  padding: 0 8px;
+}
+
+.mq-join-hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #aaa;
+  text-align: center;
+}
+
+.mq-join-sides {
+  margin-bottom: 16px;
+}
+
+.mq-join-taken {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.mq-btn-join-confirm {
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+  display: block;
+}
+
+.mq-match-history-item .mq-match-score {
+  font-size: 14px;
+  color: #e0e0e0;
+  margin: 6px 0 4px;
+}
+
+.mq-match-history-item .mq-match-rating-change {
+  font-size: 13px;
+  margin-top: 4px;
 }
