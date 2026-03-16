@@ -2203,9 +2203,33 @@ footer p { margin: 5px 0; }
   gap: 12px;
 }
 
-.sim-player-side {
+.sim-player-box {
   flex: 1;
   min-width: 100px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-player-box.blue {
+  border: 1px solid rgba(84, 160, 255, 0.4);
+  background: rgba(84, 160, 255, 0.08);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.sim-player-box.red {
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.08);
+  align-items: flex-end;
+  text-align: right;
+}
+
+.sim-player-side {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2215,6 +2239,11 @@ footer p { margin: 5px 0; }
 
 .sim-player-side.blue { align-items: flex-start; text-align: left; }
 .sim-player-side.red { align-items: flex-end; text-align: right; }
+
+.sim-players-horizontal .sim-player-box .sim-player-side {
+  align-items: inherit;
+  text-align: inherit;
+}
 
 .sim-player-side .sim-player-label {
   font-size: 13px;
@@ -2244,6 +2273,14 @@ footer p { margin: 5px 0; }
   font-size: 14px;
   font-weight: bold;
   padding: 0 8px;
+}
+
+.sim-vs-sep.sim-vs-gold {
+  color: #ffd93d;
+  font-size: 18px;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(255, 217, 61, 0.5);
+  letter-spacing: 2px;
 }
 
 .sim-players-horizontal .sim-odds-hint {

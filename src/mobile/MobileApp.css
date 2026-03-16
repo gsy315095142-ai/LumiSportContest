@@ -491,17 +491,41 @@
   margin-bottom: 8px;
 }
 
-/* 选手积分与赔率展示（左蓝方 VS 右红方，分层排版） */
+/* 选手积分与赔率展示（左蓝方 VS 右红方，分层排版，框选增强） */
 .mq-players-odds {
   display: flex;
   flex-direction: row;
   align-items: stretch;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   margin: 12px 0 8px;
-  padding: 14px 16px;
+  padding: 12px 10px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
+  border-radius: 14px;
+}
+
+.mq-player-box {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mq-player-box.blue {
+  border: 1px solid rgba(84, 160, 255, 0.4);
+  background: rgba(84, 160, 255, 0.08);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.mq-player-box.red {
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.08);
+  align-items: flex-end;
+  text-align: right;
 }
 
 .mq-player-side {
@@ -516,6 +540,11 @@
 
 .mq-player-side.blue { align-items: flex-start; text-align: left; }
 .mq-player-side.red { align-items: flex-end; text-align: right; }
+
+.mq-players-odds .mq-player-box .mq-player-side {
+  align-items: inherit;
+  text-align: inherit;
+}
 
 .mq-player-side .mq-player-label {
   font-size: 13px;
@@ -575,10 +604,19 @@
 
 .mq-vs-sep {
   flex-shrink: 0;
+  align-self: center;
   color: #666;
   font-size: 14px;
   font-weight: bold;
   padding: 0 6px;
+}
+
+.mq-vs-sep.mq-vs-gold {
+  color: #ffd93d;
+  font-size: 18px;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(255, 217, 61, 0.5);
+  letter-spacing: 2px;
 }
 
 .mq-participant-block {

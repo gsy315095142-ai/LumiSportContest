@@ -148,19 +148,23 @@ function JoinPage({ user, setUser }) {
           </div>
         )}
 
-        {/* 比赛进行中：展示对战双方（左蓝方 VS 右红方） */}
-        {status === 'started' && (gameInfo?.redPlayer || gameInfo?.bluePlayer) && (
+        {/* 报名中/比赛进行中：展示对战双方（左蓝方 VS 右红方，选手也可见） */}
+        {(status === 'betting' || status === 'started') && (
           <div className="mq-players-odds" style={{ marginBottom: 16 }}>
-            <div className="mq-player-side blue">
-              <div className="mq-player-label">🔵 蓝方</div>
-              <div className="mq-player-name">{gameInfo.bluePlayer || '待定'}</div>
-              <div className="mq-player-rating">{gameInfo.blueRating || 0}分</div>
+            <div className="mq-player-box blue">
+              <div className="mq-player-side blue">
+                <div className="mq-player-label">🔵 蓝方</div>
+                <div className="mq-player-name">{gameInfo?.bluePlayer || contestStatus?.bluePlayer || '等待选手报名'}</div>
+                <div className="mq-player-rating">{gameInfo?.blueRating || 0}分</div>
+              </div>
             </div>
-            <span className="mq-vs-sep">VS</span>
-            <div className="mq-player-side red">
-              <div className="mq-player-label">🔴 红方</div>
-              <div className="mq-player-name">{gameInfo.redPlayer || '待定'}</div>
-              <div className="mq-player-rating">{gameInfo.redRating || 0}分</div>
+            <span className="mq-vs-sep mq-vs-gold">VS</span>
+            <div className="mq-player-box red">
+              <div className="mq-player-side red">
+                <div className="mq-player-label">🔴 红方</div>
+                <div className="mq-player-name">{gameInfo?.redPlayer || contestStatus?.redPlayer || '等待选手报名'}</div>
+                <div className="mq-player-rating">{gameInfo?.redRating || 0}分</div>
+              </div>
             </div>
           </div>
         )}
@@ -169,16 +173,20 @@ function JoinPage({ user, setUser }) {
         {status === 'settled' && (gameInfo?.redPlayer || gameInfo?.bluePlayer) && (
           <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
             <div className="mq-players-odds" style={{ marginBottom: 8 }}>
-              <div className="mq-player-side blue">
-                <div className="mq-player-label">🔵 蓝方</div>
-                <div className="mq-player-name">{gameInfo.bluePlayer || '—'}</div>
-                <div className="mq-player-rating mq-score">{gameInfo.blueScore ?? '?'}</div>
+              <div className="mq-player-box blue">
+                <div className="mq-player-side blue">
+                  <div className="mq-player-label">🔵 蓝方</div>
+                  <div className="mq-player-name">{gameInfo.bluePlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.blueScore ?? '?'}</div>
+                </div>
               </div>
-              <span className="mq-vs-sep">:</span>
-              <div className="mq-player-side red">
-                <div className="mq-player-label">🔴 红方</div>
-                <div className="mq-player-name">{gameInfo.redPlayer || '—'}</div>
-                <div className="mq-player-rating mq-score">{gameInfo.redScore ?? '?'}</div>
+              <span className="mq-vs-sep mq-vs-gold">:</span>
+              <div className="mq-player-box red">
+                <div className="mq-player-side red">
+                  <div className="mq-player-label">🔴 红方</div>
+                  <div className="mq-player-name">{gameInfo.redPlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.redScore ?? '?'}</div>
+                </div>
               </div>
             </div>
             <div className="mq-status-msg settled">{gameInfo.result || '已开奖'}</div>
@@ -190,16 +198,20 @@ function JoinPage({ user, setUser }) {
           <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
             <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>上一局结果</div>
             <div className="mq-players-odds" style={{ marginBottom: 0 }}>
-              <div className="mq-player-side blue">
-                <div className="mq-player-label">🔵 蓝方</div>
-                <div className="mq-player-name">{gameInfo.lastSettledMatch.bluePlayer || '—'}</div>
-                <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.blueScore ?? '?'}</div>
+              <div className="mq-player-box blue">
+                <div className="mq-player-side blue">
+                  <div className="mq-player-label">🔵 蓝方</div>
+                  <div className="mq-player-name">{gameInfo.lastSettledMatch.bluePlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.blueScore ?? '?'}</div>
+                </div>
               </div>
-              <span className="mq-vs-sep">:</span>
-              <div className="mq-player-side red">
-                <div className="mq-player-label">🔴 红方</div>
-                <div className="mq-player-name">{gameInfo.lastSettledMatch.redPlayer || '—'}</div>
-                <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.redScore ?? '?'}</div>
+              <span className="mq-vs-sep mq-vs-gold">:</span>
+              <div className="mq-player-box red">
+                <div className="mq-player-side red">
+                  <div className="mq-player-label">🔴 红方</div>
+                  <div className="mq-player-name">{gameInfo.lastSettledMatch.redPlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.redScore ?? '?'}</div>
+                </div>
               </div>
             </div>
             <div className="mq-status-msg settled" style={{ marginTop: 8 }}>{gameInfo.lastSettledMatch.result || '已开奖'}</div>

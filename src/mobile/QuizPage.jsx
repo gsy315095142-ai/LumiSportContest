@@ -388,18 +388,22 @@ function QuizPage({ user, setUser }) {
           <>
             <div className="mq-match-name">{isHockey ? '🏒' : '🥊'} {gameInfo?.matchName || '竞猜赛事'}</div>
             <div className="mq-players-odds">
-              <div className="mq-player-side blue">
-                <div className="mq-player-label">🔵 蓝方</div>
-                <div className="mq-player-name">{bluePlayer || '等待选手报名'}</div>
-                <div className="mq-player-rating">{blueRating}分</div>
-                <div className="mq-odds-tag">×{odds.blue}</div>
+              <div className="mq-player-box blue">
+                <div className="mq-player-side blue">
+                  <div className="mq-player-label">🔵 蓝方</div>
+                  <div className="mq-player-name">{bluePlayer || '等待选手报名'}</div>
+                  <div className="mq-player-rating">{blueRating}分</div>
+                  <div className="mq-odds-tag">×{odds.blue}</div>
+                </div>
               </div>
-              <span className="mq-vs-sep">VS</span>
-              <div className="mq-player-side red">
-                <div className="mq-player-label">🔴 红方</div>
-                <div className="mq-player-name">{redPlayer || '等待选手报名'}</div>
-                <div className="mq-player-rating">{redRating}分</div>
-                <div className="mq-odds-tag">×{odds.red}</div>
+              <span className="mq-vs-sep mq-vs-gold">VS</span>
+              <div className="mq-player-box red">
+                <div className="mq-player-side red">
+                  <div className="mq-player-label">🔴 红方</div>
+                  <div className="mq-player-name">{redPlayer || '等待选手报名'}</div>
+                  <div className="mq-player-rating">{redRating}分</div>
+                  <div className="mq-odds-tag">×{odds.red}</div>
+                </div>
               </div>
             </div>
           </>

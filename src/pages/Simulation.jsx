@@ -198,18 +198,22 @@ function Simulation() {
           </div>
 
           <div className="sim-players-odds-display sim-players-horizontal">
-            <div className="sim-player-side blue">
-              <div className="sim-player-label">🔵 蓝方</div>
-              <div className="sim-player-name">{bluePlayer || '等待选手报名'}</div>
-              <div className="sim-player-rating">{blueRating}分</div>
-              <div className="sim-odds-tag">×{odds.blue}</div>
+            <div className="sim-player-box blue">
+              <div className="sim-player-side blue">
+                <div className="sim-player-label">🔵 蓝方</div>
+                <div className="sim-player-name">{bluePlayer || '等待选手报名'}</div>
+                <div className="sim-player-rating">{blueRating}分</div>
+                <div className="sim-odds-tag">×{odds.blue}</div>
+              </div>
             </div>
-            <span className="sim-vs-sep">VS</span>
-            <div className="sim-player-side red">
-              <div className="sim-player-label">🔴 红方</div>
-              <div className="sim-player-name">{redPlayer || '等待选手报名'}</div>
-              <div className="sim-player-rating">{redRating}分</div>
-              <div className="sim-odds-tag">×{odds.red}</div>
+            <span className="sim-vs-sep sim-vs-gold">VS</span>
+            <div className="sim-player-box red">
+              <div className="sim-player-side red">
+                <div className="sim-player-label">🔴 红方</div>
+                <div className="sim-player-name">{redPlayer || '等待选手报名'}</div>
+                <div className="sim-player-rating">{redRating}分</div>
+                <div className="sim-odds-tag">×{odds.red}</div>
+              </div>
             </div>
             <p className="sim-odds-hint">选手由手机端【我要参赛】确认，赔率按积分自动计算</p>
           </div>
