@@ -517,15 +517,15 @@
 .mq-player-box.blue {
   border: 1px solid rgba(84, 160, 255, 0.4);
   background: rgba(84, 160, 255, 0.08);
-  align-items: flex-start;
-  text-align: left;
+  align-items: center;
+  text-align: center;
 }
 
 .mq-player-box.red {
   border: 1px solid rgba(255, 107, 107, 0.4);
   background: rgba(255, 107, 107, 0.08);
-  align-items: flex-end;
-  text-align: right;
+  align-items: center;
+  text-align: center;
 }
 
 .mq-player-side {
@@ -538,12 +538,12 @@
   text-align: center;
 }
 
-.mq-player-side.blue { align-items: flex-start; text-align: left; }
-.mq-player-side.red { align-items: flex-end; text-align: right; }
+.mq-player-side.blue { align-items: center; text-align: center; }
+.mq-player-side.red { align-items: center; text-align: center; }
 
 .mq-players-odds .mq-player-box .mq-player-side {
-  align-items: inherit;
-  text-align: inherit;
+  align-items: center;
+  text-align: center;
 }
 
 .mq-player-side .mq-player-label {

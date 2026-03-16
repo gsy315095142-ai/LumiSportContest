@@ -2216,15 +2216,15 @@ footer p { margin: 5px 0; }
 .sim-player-box.blue {
   border: 1px solid rgba(84, 160, 255, 0.4);
   background: rgba(84, 160, 255, 0.08);
-  align-items: flex-start;
-  text-align: left;
+  align-items: center;
+  text-align: center;
 }
 
 .sim-player-box.red {
   border: 1px solid rgba(255, 107, 107, 0.4);
   background: rgba(255, 107, 107, 0.08);
-  align-items: flex-end;
-  text-align: right;
+  align-items: center;
+  text-align: center;
 }
 
 .sim-player-side {
@@ -2237,12 +2237,12 @@ footer p { margin: 5px 0; }
   text-align: center;
 }
 
-.sim-player-side.blue { align-items: flex-start; text-align: left; }
-.sim-player-side.red { align-items: flex-end; text-align: right; }
+.sim-player-side.blue { align-items: center; text-align: center; }
+.sim-player-side.red { align-items: center; text-align: center; }
 
 .sim-players-horizontal .sim-player-box .sim-player-side {
-  align-items: inherit;
-  text-align: inherit;
+  align-items: center;
+  text-align: center;
 }
 
 .sim-player-side .sim-player-label {
