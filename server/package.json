@@ -1,0 +1,14 @@
+{
+  "name": "lumisport-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.7.5"
+  }
+}

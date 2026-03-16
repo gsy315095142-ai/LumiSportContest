@@ -1,0 +1,880 @@
+/* ========== 手机端全局 ========== */
+
+.mobile-login,
+.mobile-quiz {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #e0e0e0;
+  padding: 0;
+  margin: 0;
+}
+
+/* ========== 登录页 ========== */
+
+.mobile-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.login-logo {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.login-card h1 {
+  font-size: 24px;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.login-subtitle {
+  color: #aaa;
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.login-card input:focus {
+  border-color: #6c63ff;
+}
+
+.login-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin: 8px 0 0;
+  text-align: left;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6c63ff, #e94560);
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.login-card button:disabled {
+  opacity: 0.5;
+}
+
+.login-hint {
+  color: #888;
+  font-size: 12px;
+  margin-top: 16px;
+}
+
+/* ========== 竞猜页 - 顶部栏 ========== */
+
+.mq-header {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.mq-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mq-username { font-weight: bold; color: #fff; }
+.mq-coins { color: #ffd93d; font-weight: bold; }
+.mq-betted { color: #ff9f43; font-size: 12px; }
+
+.mq-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mq-actions-row {
+  display: flex;
+  gap: 6px;
+}
+
+.mq-btn-small {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mq-btn-small:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ========== 广告弹窗 ========== */
+
+.mq-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mq-ad-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.mq-ad-modal h3 { margin: 0 0 12px; }
+.mq-ad-video-container { border-radius: 8px; overflow: hidden; background: #000; }
+.mq-ad-hint { color: #aaa; font-size: 13px; margin: 8px 0 0; }
+.mq-btn-close {
+  margin-top: 12px;
+  padding: 8px 24px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+/* ========== 历史竞猜按钮 ========== */
+
+.mq-btn-history {
+  background: rgba(255, 215, 61, 0.12);
+  border-color: rgba(255, 215, 61, 0.3);
+  color: #ffd93d;
+}
+
+/* ========== 竞猜币记录按钮 ========== */
+
+.mq-btn-coinlog {
+  background: rgba(108, 99, 255, 0.12);
+  border-color: rgba(108, 99, 255, 0.3);
+  color: #a99fff;
+}
+
+/* ========== 竞猜币记录列表 ========== */
+
+.mq-coinlog-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.mq-coinlog-item.gain { border-left-color: #6bcb77; }
+.mq-coinlog-item.spend { border-left-color: #e94560; }
+.mq-coinlog-item.info { border-left-color: #60a5fa; }
+.mq-coinlog-amount.info { color: #60a5fa; font-size: 16px; }
+
+.mq-coinlog-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mq-coinlog-reason {
+  font-size: 13px;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mq-coinlog-time {
+  font-size: 11px;
+  color: #666;
+}
+
+.mq-coinlog-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.mq-coinlog-amount {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mq-coinlog-amount.gain { color: #6bcb77; }
+.mq-coinlog-amount.spend { color: #e94560; }
+
+.mq-coinlog-balance {
+  font-size: 11px;
+  color: #666;
+}
+
+/* ========== 历史竞猜弹窗 ========== */
+
+.mq-history-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mq-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mq-history-header h3 { margin: 0; font-size: 16px; }
+
+.mq-btn-close-x {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.mq-history-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 20px;
+}
+
+.mq-history-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.mq-history-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.mq-history-time {
+  font-size: 12px;
+  color: #888;
+}
+
+.mq-history-won {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+}
+
+.mq-history-won.positive {
+  color: #6bcb77;
+}
+
+.mq-history-won.negative {
+  color: #e94560;
+}
+
+.mq-history-match {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.mq-history-vs {
+  display: block;
+  font-size: 13px;
+  font-weight: normal;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.mq-history-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mq-history-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  align-items: center;
+}
+
+.mq-history-detail.hit { border-left-color: #6bcb77; }
+.mq-history-detail.draw { border-left-color: #ffd93d; }
+
+.mq-hd-type { color: #fff; font-weight: 600; }
+.mq-hd-bet { color: #aaa; }
+.mq-hd-actual { color: #93c5fd; }
+.mq-hd-result { margin-left: auto; font-weight: 600; }
+.mq-hd-result.hit { color: #6bcb77; }
+.mq-hd-result.draw { color: #ffd93d; }
+.mq-hd-result.miss { color: #888; }
+
+/* ========== 实际结果行 ========== */
+
+.mq-result-detail-actual {
+  font-size: 12px;
+  color: #93c5fd;
+  margin-bottom: 3px;
+}
+
+/* ========== 错误提示 ========== */
+
+.mq-error-toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e94560;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 200;
+  animation: fadeInOut 3s ease;
+}
+
+.mq-error { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ========== 比赛状态 ========== */
+
+.mq-game-status {
+  padding: 16px;
+  text-align: center;
+}
+
+.mq-match-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.mq-tiers {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.mq-status-msg {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+.mq-status-msg.betting { background: rgba(108, 99, 255, 0.2); color: #a99fff; }
+.mq-status-msg.started { background: rgba(233, 69, 96, 0.2); color: #ff8fa3; }
+.mq-status-msg.settled { background: rgba(107, 203, 119, 0.2); color: #6bcb77; }
+
+.red-text { color: #ff6b6b; }
+.blue-text { color: #54a0ff; }
+
+/* ========== 开奖结果卡片 ========== */
+
+.mq-result-card {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.mq-result-score {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.mq-result-info {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 12px;
+}
+
+.mq-my-result {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.mq-my-result.won {
+  background: rgba(107, 203, 119, 0.15);
+  color: #6bcb77;
+}
+
+.mq-my-result.lost {
+  background: rgba(233, 69, 96, 0.1);
+  color: #aaa;
+}
+
+.mq-my-result.even {
+  background: rgba(255, 217, 61, 0.1);
+  color: #ffd93d;
+}
+
+/* 赔率行（独立一行） */
+.mq-odds-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+.mq-odds-sep {
+  color: #555;
+  font-weight: normal;
+}
+
+/* 结算总结 */
+.mq-my-result-summary {
+  margin-bottom: 10px;
+}
+
+/* 结算明细列表 */
+.mq-result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* 每条结算明细 */
+.mq-result-detail-item {
+  font-weight: normal;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+}
+
+.mq-result-detail-item.hit {
+  border-left-color: #6bcb77;
+  background: rgba(107, 203, 119, 0.08);
+}
+
+.mq-result-detail-item.draw {
+  border-left-color: #ffd93d;
+  background: rgba(255, 217, 61, 0.08);
+}
+
+.mq-result-detail-item.miss {
+  border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+.mq-result-detail-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.mq-result-detail-bet {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 3px;
+}
+
+.mq-result-detail-outcome {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mq-result-detail-outcome.hit { color: #6bcb77; }
+.mq-result-detail-outcome.draw { color: #ffd93d; }
+.mq-result-detail-outcome.miss { color: #888; }
+
+/* ========== 下注区域 ========== */
+
+.mq-betting-section {
+  padding: 0 16px 16px;
+}
+
+.mq-bet-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.mq-bet-card h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: #fff;
+}
+
+.mq-bet-note {
+  font-size: 12px;
+  color: #888;
+  font-weight: normal;
+}
+
+.mq-bet-odds {
+  font-size: 12px;
+  color: #ffd93d;
+  font-weight: normal;
+}
+
+.mq-win-bet { display: flex; flex-direction: column; gap: 8px; }
+
+.mq-side-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mq-side-btn {
+  padding: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mq-side-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mq-side-btn.red.selected { border-color: #ff6b6b; background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+.mq-side-btn.blue.selected { border-color: #54a0ff; background: rgba(84, 160, 255, 0.15); color: #54a0ff; }
+
+.mq-elem-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mq-elem-btn {
+  padding: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: transparent;
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mq-elem-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mq-elem-btn.ice.selected { border-color: #54a0ff; background: rgba(84, 160, 255, 0.15); color: #54a0ff; }
+.mq-elem-btn.fire.selected { border-color: #ff6b6b; background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+.mq-elem-btn.wind.selected { border-color: #6bcb77; background: rgba(107, 203, 119, 0.15); color: #6bcb77; }
+
+/* 预测值输入行 */
+.mq-bet-guess-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mq-bet-guess-row input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.mq-bet-guess-row input:focus { border-color: #6c63ff; }
+
+.mq-guess-label {
+  font-size: 13px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+/* 押注金额行（独立一行 + 区分颜色） */
+.mq-bet-amount-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 215, 61, 0.06);
+  border: 1px solid rgba(255, 215, 61, 0.15);
+  border-radius: 10px;
+}
+
+.mq-bet-amount-row input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 215, 61, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffd93d;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.mq-bet-amount-row input:focus { border-color: #ffd93d; }
+.mq-bet-amount-row input::placeholder { color: rgba(255, 215, 61, 0.4); }
+
+.mq-amount-label {
+  font-size: 13px;
+  color: #ffd93d;
+  font-weight: 500;
+}
+
+/* 按钮行（独立一行） */
+.mq-bet-action-row {
+  margin-top: 10px;
+}
+
+.mq-btn-bet {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6c63ff, #5a52d5);
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.mq-btn-bet:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 已下注锁定状态行 */
+.mq-bet-locked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(107, 203, 119, 0.08);
+  border: 1px solid rgba(107, 203, 119, 0.2);
+  border-radius: 10px;
+}
+
+.mq-btn-cancel {
+  padding: 8px 16px;
+  border: 1px solid #e94560;
+  border-radius: 8px;
+  background: rgba(233, 69, 96, 0.1);
+  color: #e94560;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mq-bet-desc {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0 0 4px;
+}
+
+.mq-current-bet {
+  font-size: 13px;
+  color: #ffd93d;
+  padding: 6px 0;
+}
+
+/* ========== 排行榜 ========== */
+
+.mq-rankings {
+  padding: 16px;
+}
+
+.mq-rankings h4 {
+  margin: 0 0 12px;
+  color: #fff;
+}
+
+.mq-empty {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+}
+
+.mq-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mq-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.mq-rank-item.is-me {
+  background: rgba(108, 99, 255, 0.12);
+  border: 1px solid rgba(108, 99, 255, 0.3);
+}
+
+.mq-rank-pos {
+  width: 24px;
+  text-align: center;
+  font-weight: bold;
+  color: #ffd93d;
+}
+
+.mq-rank-icon { font-size: 18px; }
+
+.mq-rank-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mq-rank-name { color: #fff; font-weight: 500; }
+.mq-rank-tier { color: #aaa; font-size: 12px; }
+
+.mq-rank-coins-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.mq-rank-winnings { color: #ffd93d; font-size: 13px; font-weight: 600; }
+.mq-rank-balance { color: #888; font-size: 11px; }
+
+/* ========== 金币飞入动画 ========== */
+
+.mq-coin-anim-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.mq-coin-particle {
+  position: absolute;
+  font-size: 26px;
+  opacity: 0;
+  animation: coinBurstFly cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.7));
+  will-change: transform, opacity;
+}
+
+@keyframes coinBurstFly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.1);
+  }
+}
+
+/* 竞猜币闪烁反馈 */
+.mq-coins {
+  transition: color 0.3s, text-shadow 0.3s;
+}
