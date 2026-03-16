@@ -694,7 +694,7 @@ io.on('connection', (socket) => {
       let totalWon = 0;
       const details = [];
 
-      // 先扣除所有下注金额
+      // 下注金额已在 bet:place 时扣减，此处仅结算奖金/退还
       let totalBetted = 0;
       if (bet.winBet && bet.winBet.amount > 0) totalBetted += bet.winBet.amount;
       if (isHockey && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
@@ -702,7 +702,6 @@ io.on('connection', (socket) => {
       if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
       if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
       const coinsBefore = user.coins;
-      user.coins -= totalBetted;
 
       const actualWinLabel = winSide === 'red' ? '红方胜' : winSide === 'blue' ? '蓝方胜' : '平局';
 
@@ -787,13 +786,10 @@ io.on('connection', (socket) => {
       const netResult = user.coins - coinsBefore;
       settlements.push({ username, totalWon, totalBetted, netResult, details, newCoins: user.coins });
 
-      // 竞猜币流水
+      // 竞猜币流水（下注扣减已在 bet:place 时记录，此处只记赢得/退还）
       if (!user.coinLog) user.coinLog = [];
       const now = new Date().toISOString();
       const matchLabel = `${gameState.matchName} 第${gameState.round}局`;
-      if (totalBetted > 0) {
-        user.coinLog.push({ time: now, type: 'spend', amount: totalBetted, reason: `竞猜下注 · ${matchLabel}`, balance: coinsBefore - totalBetted });
-      }
       if (totalWon > 0) {
         user.coinLog.push({ time: now, type: 'gain', amount: totalWon, reason: `竞猜赢得 · ${matchLabel}`, balance: user.coins });
       }
@@ -858,9 +854,10 @@ io.on('connection', (socket) => {
         if (!user) continue;
         const totalBetted = Object.values(bet).reduce((s, b) => s + (b.amount || 0), 0);
         if (totalBetted > 0) {
+          user.coins = (user.coins || 0) + totalBetted;
           user.coinLog = user.coinLog || [];
           user.coinLog.push({
-            time: now, type: 'info', amount: 0,
+            time: now, type: 'gain', amount: totalBetted,
             reason: `第${gameState.round}局作废，押注 ${totalBetted} 币已回退`,
             balance: user.coins
           });
@@ -926,8 +923,11 @@ io.on('connection', (socket) => {
     if (myBets.preciseTotal && betType !== 'preciseTotal') totalBetted += myBets.preciseTotal.amount || 0;
     if (myBets.preciseDiff && betType !== 'preciseDiff') totalBetted += myBets.preciseDiff.amount || 0;
 
-    if (totalBetted + amt > user.coins) {
-      socket.emit('bet:error', { message: `竞猜币不足（当前 ${user.coins} 币，已下注 ${totalBetted} 币，还可下注 ${user.coins - totalBetted} 币）` });
+    // 本次下注/修改的金额变化：新增或增加为正，减少为负（退还）
+    const prevAmt = (myBets[betType] && myBets[betType].amount) || 0;
+    const delta = amt - prevAmt;
+    if (delta > 0 && delta > user.coins) {
+      socket.emit('bet:error', { message: `竞猜币不足（当前 ${user.coins} 币，需再扣 ${delta} 币）` });
       return;
     }
 
@@ -963,22 +963,48 @@ io.on('connection', (socket) => {
       myBets.preciseDiff = { value: parseInt(value), amount: amt };
     }
 
+    // 下注时立即扣减竞猜币（delta>0 扣减，delta<0 退还修改差额）
+    if (delta !== 0) {
+      user.coins -= delta;
+      if (!user.coinLog) user.coinLog = [];
+      const matchLabel = `${gameState.matchName || '赛事'} 第${gameState.round}局`;
+      if (delta > 0) {
+        user.coinLog.push({ time: new Date().toISOString(), type: 'spend', amount: delta, reason: `竞猜下注 · ${matchLabel}`, balance: user.coins });
+      } else {
+        user.coinLog.push({ time: new Date().toISOString(), type: 'gain', amount: -delta, reason: `修改下注退还 · ${matchLabel}`, balance: user.coins });
+      }
+      saveUsers(users);
+    }
+
     socket.emit('bet:myBets', myBets);
+    if (delta !== 0) socket.emit('user:coins', { coins: user.coins });
     io.emit('bet:update', buildBetSummary());
   });
 
-  // 手机端：取消下注
+  // 手机端：取消下注（退还竞猜币）
   socket.on('bet:cancel', (data) => {
     const { username, betType } = data;
     if (gameState.status !== 'betting') {
       socket.emit('bet:error', { message: '当前无法修改下注' });
       return;
     }
-    if (gameState.bets[username] && gameState.bets[username][betType]) {
-      delete gameState.bets[username][betType];
-      socket.emit('bet:myBets', gameState.bets[username]);
-      io.emit('bet:update', buildBetSummary());
+    const bet = gameState.bets[username] && gameState.bets[username][betType];
+    if (!bet) return;
+    const refundAmt = bet.amount || 0;
+    if (refundAmt > 0) {
+      const user = users[username];
+      if (user) {
+        user.coins = (user.coins || 0) + refundAmt;
+        if (!user.coinLog) user.coinLog = [];
+        const matchLabel = `${gameState.matchName || '赛事'} 第${gameState.round}局`;
+        user.coinLog.push({ time: new Date().toISOString(), type: 'gain', amount: refundAmt, reason: `取消下注退还 · ${matchLabel}`, balance: user.coins });
+        saveUsers(users);
+      }
     }
+    delete gameState.bets[username][betType];
+    socket.emit('bet:myBets', gameState.bets[username]);
+    if (refundAmt > 0 && users[username]) socket.emit('user:coins', { coins: users[username].coins });
+    io.emit('bet:update', buildBetSummary());
   });
 
   // 手机端：获取自己的下注信息
@@ -1136,7 +1162,6 @@ app.post('/api/admin/settle', (req, res) => {
     if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
 
     const coinsBefore = user.coins;
-    user.coins -= totalBetted;
 
     const actualWinLabel = winSide === 'red' ? '红方胜' : winSide === 'blue' ? '蓝方胜' : '平局';
 
@@ -1219,9 +1244,6 @@ app.post('/api/admin/settle', (req, res) => {
     if (!user.coinLog) user.coinLog = [];
     const now = new Date().toISOString();
     const matchLabel = `${gameState.matchName} 第${gameState.round}局`;
-    if (totalBetted > 0) {
-      user.coinLog.push({ time: now, type: 'spend', amount: totalBetted, reason: `竞猜下注 · ${matchLabel}`, balance: coinsBefore - totalBetted });
-    }
     if (totalWon > 0) {
       user.coinLog.push({ time: now, type: 'gain', amount: totalWon, reason: `竞猜赢得 · ${matchLabel}`, balance: user.coins });
     }

@@ -74,6 +74,10 @@ function QuizPage({ user, setUser }) {
       refreshUser();
     });
 
+    socket.on('user:coins', (data) => {
+      setUser(prev => prev ? { ...prev, coins: data.coins } : prev);
+    });
+
     socket.on('bet:myBets', (bets) => {
       setMyBets(bets);
       if (bets.winBet) { setWinSide(bets.winBet.side); setWinAmount(String(bets.winBet.amount)); }

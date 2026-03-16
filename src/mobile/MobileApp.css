@@ -159,18 +159,25 @@
   margin-top: 16px;
 }
 
-/* ========== 竞猜页 - 顶部栏 ========== */
+/* ========== 竞猜页 / 参赛页 - 顶部栏（固定，不受滚动影响） ========== */
 
 .mq-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   background: rgba(255, 255, 255, 0.06);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  position: sticky;
-  top: 0;
   z-index: 100;
   backdrop-filter: blur(10px);
+}
+
+/* 为固定头部预留空间，避免内容被遮挡 */
+.mobile-quiz {
+  padding-top: 90px;
 }
 
 .mq-user-info {

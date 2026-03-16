@@ -1,7 +1,7 @@
 {
   "郭郭": {
     "name": "郭郭",
-    "coins": 300,
+    "coins": 270,
     "totalWinnings": 0,
     "lastCheckin": "2026-03-10",
     "adWatchedToday": 0,
@@ -27,6 +27,13 @@
         "amount": 100,
         "reason": "每日签到",
         "balance": 300
+      },
+      {
+        "time": "2026-03-16T09:23:07.157Z",
+        "type": "spend",
+        "amount": 30,
+        "reason": "竞猜下注 · 001 第1局",
+        "balance": 270
       }
     ],
     "rating": 1499,
