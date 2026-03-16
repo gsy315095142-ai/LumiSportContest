@@ -76,6 +76,20 @@
         "amount": 24.2,
         "reason": "竞猜赢得 · 003 第1局",
         "balance": 274.2
+      },
+      {
+        "time": "2026-03-16T09:40:26.574Z",
+        "type": "spend",
+        "amount": 10,
+        "reason": "竞猜下注 · 004 第2局",
+        "balance": 264.2
+      },
+      {
+        "time": "2026-03-16T09:40:35.516Z",
+        "type": "gain",
+        "amount": 10,
+        "reason": "取消下注退还 · 004 第2局",
+        "balance": 274.2
       }
     ],
     "rating": 1499,
@@ -139,6 +153,20 @@
             "won": 24.2
           }
         ]
+      },
+      {
+        "time": "2026-03-16T09:41:11.642Z",
+        "matchName": "004",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": "郭郭",
+        "blueScore": 22,
+        "redScore": 21,
+        "round": 2,
+        "totalBetted": 0,
+        "totalWon": 0,
+        "netResult": 0,
+        "details": []
       }
     ]
   },
