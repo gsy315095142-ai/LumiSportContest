@@ -57,15 +57,20 @@ function JoinPage({ user, setUser }) {
     fetchGame();
   }, []);
 
-  // 当收到 settled 状态时，主动拉取最新 gameInfo 确保分数正确
+  // 当 settled 时若缺少选手或分数，主动拉取最新 gameInfo
   useEffect(() => {
-    if (gameInfo?.status === 'settled' && (gameInfo?.redScore == null || gameInfo?.blueScore == null)) {
-      fetch('/api/game')
-        .then(r => r.json())
-        .then(data => data.gameInfo && setGameInfo(data.gameInfo))
-        .catch(() => {});
-    }
-  }, [gameInfo?.status, gameInfo?.redScore, gameInfo?.blueScore]);
+    if (gameInfo?.status !== 'settled') return;
+    const needRefresh = (gameInfo?.redPlayer == null && gameInfo?.bluePlayer == null) ||
+      (gameInfo?.redScore == null && gameInfo?.blueScore == null);
+    if (!needRefresh) return;
+    fetch('/api/game')
+      .then(r => r.json())
+      .then(data => {
+        if (data.gameInfo) setGameInfo(data.gameInfo);
+        if (data.contestStatus) setContestStatus(data.contestStatus);
+      })
+      .catch(() => {});
+  }, [gameInfo?.status, gameInfo?.redPlayer, gameInfo?.bluePlayer, gameInfo?.redScore, gameInfo?.blueScore]);
 
   // 进入参赛页时刷新用户信息（含竞猜币、选手积分）
   useEffect(() => {
@@ -160,6 +165,36 @@ function JoinPage({ user, setUser }) {
           </div>
         )}
 
+        {/* 比赛结束后、下一局开始前/中：展示上一局结果（含分数） */}
+        {(status === 'waiting' || status === 'betting') && gameInfo?.lastSettledMatch && (
+          <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+              上一局结果
+              {gameInfo.lastSettledMatch.matchName && ` · ${gameInfo.lastSettledMatch.matchName}`}
+            </div>
+            <div className="mq-players-odds" style={{ marginBottom: 0 }}>
+              <div className="mq-player-box blue">
+                <div className="mq-player-side blue">
+                  <div className="mq-player-label">🔵 蓝方</div>
+                  <div className="mq-player-name">{gameInfo.lastSettledMatch.bluePlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.blueScore ?? '?'}</div>
+                </div>
+              </div>
+              <span className="mq-vs-sep mq-vs-gold">:</span>
+              <div className="mq-player-box red">
+                <div className="mq-player-side red">
+                  <div className="mq-player-label">🔴 红方</div>
+                  <div className="mq-player-name">{gameInfo.lastSettledMatch.redPlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.redScore ?? '?'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="mq-status-msg settled" style={{ marginTop: 8 }}>
+              比分 {gameInfo.lastSettledMatch.blueScore ?? '?'} : {gameInfo.lastSettledMatch.redScore ?? '?'} · {gameInfo.lastSettledMatch.result || '已开奖'}
+            </div>
+          </div>
+        )}
+
         {/* 报名中/比赛进行中：展示对战双方（左蓝方 VS 右红方，选手也可见） */}
         {(status === 'betting' || status === 'started') && (
           <div className="mq-players-odds" style={{ marginBottom: 16 }}>
@@ -181,58 +216,33 @@ function JoinPage({ user, setUser }) {
           </div>
         )}
 
-        {/* 比赛已结束：展示胜负结果（左蓝方 VS 右红方） */}
-        {status === 'settled' && (gameInfo?.redPlayer || gameInfo?.bluePlayer) && (
+        {/* 比赛已结束：展示胜负结果（左蓝方 VS 右红方，含选手与比分） */}
+        {status === 'settled' && (gameInfo?.redPlayer || gameInfo?.bluePlayer || contestStatus?.redPlayer || contestStatus?.bluePlayer || gameInfo?.redScore != null || gameInfo?.blueScore != null) && (
           <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
             <div className="mq-players-odds" style={{ marginBottom: 8 }}>
               <div className="mq-player-box blue">
                 <div className="mq-player-side blue">
                   <div className="mq-player-label">🔵 蓝方</div>
-                  <div className="mq-player-name">{gameInfo.bluePlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.blueScore ?? '?'}</div>
+                  <div className="mq-player-name">{gameInfo?.bluePlayer || contestStatus?.bluePlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo?.blueScore ?? '?'}</div>
                 </div>
               </div>
               <span className="mq-vs-sep mq-vs-gold">:</span>
               <div className="mq-player-box red">
                 <div className="mq-player-side red">
                   <div className="mq-player-label">🔴 红方</div>
-                  <div className="mq-player-name">{gameInfo.redPlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.redScore ?? '?'}</div>
+                  <div className="mq-player-name">{gameInfo?.redPlayer || contestStatus?.redPlayer || '—'}</div>
+                  <div className="mq-player-rating mq-score">{gameInfo?.redScore ?? '?'}</div>
                 </div>
               </div>
             </div>
-            <div className="mq-status-msg settled">{gameInfo.result || '已开奖'}</div>
-          </div>
-        )}
-
-        {/* 下一局未开始：展示上一局结果（左蓝方 VS 右红方） */}
-        {status === 'waiting' && gameInfo?.lastSettledMatch && (
-          <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>上一局结果</div>
-            <div className="mq-players-odds" style={{ marginBottom: 0 }}>
-              <div className="mq-player-box blue">
-                <div className="mq-player-side blue">
-                  <div className="mq-player-label">🔵 蓝方</div>
-                  <div className="mq-player-name">{gameInfo.lastSettledMatch.bluePlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.blueScore ?? '?'}</div>
-                </div>
-              </div>
-              <span className="mq-vs-sep mq-vs-gold">:</span>
-              <div className="mq-player-box red">
-                <div className="mq-player-side red">
-                  <div className="mq-player-label">🔴 红方</div>
-                  <div className="mq-player-name">{gameInfo.lastSettledMatch.redPlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.redScore ?? '?'}</div>
-                </div>
-              </div>
-            </div>
-            <div className="mq-status-msg settled" style={{ marginTop: 8 }}>{gameInfo.lastSettledMatch.result || '已开奖'}</div>
+            <div className="mq-status-msg settled">比分 {gameInfo?.blueScore ?? '?'} : {gameInfo?.redScore ?? '?'} · {gameInfo?.result || '已开奖'}</div>
           </div>
         )}
 
         {!canOperate ? (
-          <div className="mq-status-msg mq-join-status" style={{ marginTop: 8 }}>
-            {statusMsg}
+          <div className={`mq-status-msg mq-join-status ${status}`} style={{ marginTop: 8, display: 'block', width: '100%', textAlign: 'center' }}>
+            {status === 'started' ? `${gameInfo?.gameType === 'boxing' ? '🥊' : '🏒'} 比赛进行中` : statusMsg}
           </div>
         ) : (
           <>

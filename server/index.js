@@ -186,7 +186,8 @@ function buildGameInfo() {
       info.totalKnockdowns = gameState.totalKnockdowns;
     }
   }
-  if (gameState.status === 'waiting' && lastSettledMatch) {
+  // waiting 或 betting 时展示上一局结果（比赛结束后、下一局开始前/中）
+  if ((gameState.status === 'waiting' || gameState.status === 'betting') && lastSettledMatch) {
     info.lastSettledMatch = lastSettledMatch;
   }
   return info;
@@ -1050,6 +1051,21 @@ app.post('/api/admin/configure', (req, res) => {
   if (!checkAdminToken(req, res)) return;
   if (gameState.status === 'started') {
     return res.status(400).json({ error: '比赛进行中，无法重新配置' });
+  }
+
+  // 若当前为已结算，先保存上一局结果供 waiting/betting 时展示
+  if (gameState.status === 'settled' && gameState.redPlayer && gameState.bluePlayer) {
+    const rs = parseInt(gameState.redScore);
+    const bs = parseInt(gameState.blueScore);
+    lastSettledMatch = {
+      matchName: gameState.matchName,
+      gameType: gameState.gameType,
+      redPlayer: gameState.redPlayer,
+      bluePlayer: gameState.bluePlayer,
+      redScore: isNaN(rs) ? '' : rs,
+      blueScore: isNaN(bs) ? '' : bs,
+      result: !isNaN(rs) && !isNaN(bs) ? (rs > bs ? '红方胜' : rs < bs ? '蓝方胜' : '平局') : '',
+    };
   }
 
   const { matchName, gameType } = req.body;
