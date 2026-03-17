@@ -21,6 +21,7 @@ function QuizPage({ user, setUser }) {
   const videoRef = useRef(null);
   const coinTargetRef = useRef(null);
   const prevCoinsRef = useRef(user.coins);
+  const lastRoundRef = useRef(null);
 
   // 下注表单
   const [winSide, setWinSide] = useState('');
@@ -57,6 +58,16 @@ function QuizPage({ user, setUser }) {
       if (info.status === 'betting' || info.status === 'waiting') {
         setResultData(null);
       }
+      // 局号变化时（例如 Unity 直接 HTTP 开启下一局），清除上一局的下注状态
+      if (lastRoundRef.current !== null && info.round !== lastRoundRef.current) {
+        setMyBets({});
+        setWinSide(''); setWinAmount('');
+        setElemChoice(''); setElemAmount('');
+        setKnockdownGuess(''); setKnockdownAmount('');
+        setTotalGuess(''); setTotalAmount('');
+        setDiffGuess(''); setDiffAmount('');
+      }
+      lastRoundRef.current = info.round;
     });
 
     socket.on('game:next', () => {
@@ -67,6 +78,17 @@ function QuizPage({ user, setUser }) {
       setKnockdownGuess(''); setKnockdownAmount('');
       setTotalGuess(''); setTotalAmount('');
       setDiffGuess(''); setDiffAmount('');
+    });
+
+    socket.on('game:cancel', () => {
+      setMyBets({});
+      setResultData(null);
+      setWinSide(''); setWinAmount('');
+      setElemChoice(''); setElemAmount('');
+      setKnockdownGuess(''); setKnockdownAmount('');
+      setTotalGuess(''); setTotalAmount('');
+      setDiffGuess(''); setDiffAmount('');
+      refreshUser();
     });
 
     socket.on('game:result', (data) => {
@@ -434,18 +456,22 @@ function QuizPage({ user, setUser }) {
           {/* 本局开奖结果 - 各竞猜条目实际结果 */}
           <div className="mq-result-info">
             <span>胜方：{(resultData?.winSide ?? gameInfo?.winSide) === 'blue' ? '蓝方' : (resultData?.winSide ?? gameInfo?.winSide) === 'red' ? '红方' : '平局'}</span>
-            {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey'
+            {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
               ? <span>元素之王：{{ ice: '❄️ 冰', fire: '🔥 火', wind: '🌪️ 风' }[resultData?.elementWinner] ?? '—'}</span>
-              : <span>倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</span>
+              : (resultData?.gameType ?? gameInfo?.gameType) !== 'hockey'
+                ? <span>倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</span>
+                : null
             }
           </div>
           <div className="mq-result-actual-outcomes">
             <div className="mq-result-actual-title">📋 本局开奖结果</div>
             <div className="mq-result-actual-list">
               <div className="mq-result-actual-item">胜负：{(resultData?.winSide ?? gameInfo?.winSide) === 'red' ? '🔴 红方胜' : (resultData?.winSide ?? gameInfo?.winSide) === 'blue' ? '🔵 蓝方胜' : '⚖️ 平局'}</div>
-              {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey'
+              {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
                 ? <div className="mq-result-actual-item">元素之王：{{ ice: '❄️ 冰球', fire: '🔥 火球', wind: '🌪️ 风球' }[resultData?.elementWinner] ?? '—'}</div>
-                : <div className="mq-result-actual-item">倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</div>
+                : (resultData?.gameType ?? gameInfo?.gameType) !== 'hockey'
+                  ? <div className="mq-result-actual-item">倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</div>
+                  : null
               }
               <div className="mq-result-actual-item">精准总分：{resultData?.totalScore ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? (parseInt(gameInfo.redScore) + parseInt(gameInfo.blueScore)) : '—')}</div>
               <div className="mq-result-actual-item">精准分差：{resultData?.scoreDiff ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? Math.abs(parseInt(gameInfo.redScore) - parseInt(gameInfo.blueScore)) : '—')}</div>
@@ -545,8 +571,8 @@ function QuizPage({ user, setUser }) {
             </div>
           </div>
 
-          {/* 元素之王（冰球模式）/ 躺平之王（拳王模式） */}
-          {isHockey ? (
+          {/* 元素之王（冰球大师模式）/ 躺平之王（拳王模式）/ 冰球非大师模式不显示 */}
+          {isHockey && gameInfo?.isMasterMode !== false ? (
             <div className="mq-bet-card">
               <h4>❄️🔥🌪️ 元素之王 <span className="mq-bet-odds">赔率 ×3</span></h4>
               <p className="mq-bet-desc">猜测哪种元素球出现次数最多</p>
@@ -602,7 +628,7 @@ function QuizPage({ user, setUser }) {
                 </div>
               )}
             </div>
-          ) : (
+          ) : !isHockey ? (
             <div className="mq-bet-card">
               <h4>🤸 躺平之王 <span className="mq-bet-odds">赔率 ×3</span></h4>
               <p className="mq-bet-desc">竞猜本场双方倒地次数总和</p>
@@ -649,7 +675,7 @@ function QuizPage({ user, setUser }) {
                 <div className="mq-current-bet">✅ 已下注：猜 {myBets.knockdownKing.value} 次 · {myBets.knockdownKing.amount} 币</div>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* 精准总分 */}
           <div className="mq-bet-card">

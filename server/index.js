@@ -152,6 +152,7 @@ function createFreshGame() {
     totalKnockdowns: '',     // 魔法拳王：双方倒地次数总和
     bets: {},
     round: 1,
+    isMasterMode: true,      // 是否大师模式；冰球非大师模式时不显示/结算元素之王
   };
 }
 
@@ -169,6 +170,7 @@ function buildGameInfo() {
     blueRating: blueRating ?? 0,
     round: gameState.round,
     odds,
+    isMasterMode: gameState.isMasterMode ?? true,
   };
   if (gameState.status === 'started' || gameState.status === 'settled') {
     const rs = typeof gameState.redScore === 'number' ? gameState.redScore : parseInt(gameState.redScore);
@@ -200,6 +202,25 @@ function buildContestStatus() {
     redAvailable: gameState.redPlayer === null,
     blueAvailable: gameState.bluePlayer === null,
   };
+}
+
+function refundAllBets(reason) {
+  const now = new Date().toISOString();
+  for (const [username, bet] of Object.entries(gameState.bets)) {
+    const user = users[username];
+    if (!user) continue;
+    const totalBetted = Object.values(bet).reduce((s, b) => s + (b.amount || 0), 0);
+    if (totalBetted > 0) {
+      user.coins = (user.coins || 0) + totalBetted;
+      user.coinLog = user.coinLog || [];
+      user.coinLog.push({
+        time: now, type: 'gain', amount: totalBetted,
+        reason,
+        balance: user.coins
+      });
+    }
+  }
+  saveUsers(users);
 }
 
 function loadMatchHistory() {
@@ -603,9 +624,10 @@ io.on('connection', (socket) => {
   // PC 端：更新比赛设置（仅在 waiting/betting 状态下允许，选手由手机端参赛确认）
   socket.on('game:config', (data) => {
     if (gameState.status === 'started' || gameState.status === 'settled') return;
-    const { matchName, gameType } = data;
+    const { matchName, gameType, isMasterMode } = data;
     if (matchName !== undefined) gameState.matchName = matchName;
     if (gameType && (gameType === 'hockey' || gameType === 'boxing')) gameState.gameType = gameType;
+    if (isMasterMode !== undefined) gameState.isMasterMode = !!isMasterMode;
     io.emit('game:update', buildGameInfo());
   });
 
@@ -640,11 +662,12 @@ io.on('connection', (socket) => {
     const missing = [];
     if (redScore === '' || redScore === undefined || redScore === null) missing.push('红方分数');
     if (blueScore === '' || blueScore === undefined || blueScore === null) missing.push('蓝方分数');
-    if (isHockey) {
+    const isMasterMode = gameState.isMasterMode ?? true;
+    if (isHockey && isMasterMode) {
       if (iceBalls === '' || iceBalls === undefined || iceBalls === null) missing.push('冰球次数');
       if (fireBalls === '' || fireBalls === undefined || fireBalls === null) missing.push('火球次数');
       if (windBalls === '' || windBalls === undefined || windBalls === null) missing.push('风球次数');
-    } else {
+    } else if (!isHockey) {
       if (totalKnockdowns === '' || totalKnockdowns === undefined || totalKnockdowns === null) missing.push('倒地次数总和');
     }
     if (missing.length > 0) {
@@ -658,7 +681,7 @@ io.on('connection', (socket) => {
     let elementWinner = null;
     let ice = 0, fire = 0, wind = 0, knockdowns = 0;
 
-    if (isHockey) {
+    if (isHockey && isMasterMode) {
       ice = parseInt(iceBalls);
       fire = parseInt(fireBalls);
       wind = parseInt(windBalls);
@@ -667,7 +690,7 @@ io.on('connection', (socket) => {
       if (ice === maxElem) elementWinner = 'ice';
       else if (fire === maxElem) elementWinner = 'fire';
       else elementWinner = 'wind';
-    } else {
+    } else if (!isHockey) {
       knockdowns = parseInt(totalKnockdowns);
     }
 
@@ -698,7 +721,7 @@ io.on('connection', (socket) => {
       // 下注金额已在 bet:place 时扣减，此处仅结算奖金/退还
       let totalBetted = 0;
       if (bet.winBet && bet.winBet.amount > 0) totalBetted += bet.winBet.amount;
-      if (isHockey && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
+      if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
       if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
       if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
       if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
@@ -723,8 +746,8 @@ io.on('connection', (socket) => {
         }
       }
 
-      // 元素之王（仅冰球模式）
-      if (isHockey && bet.elementKing && bet.elementKing.amount > 0) {
+      // 元素之王（仅冰球大师模式）
+      if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) {
         const elemNames = { ice: '冰球', fire: '火球', wind: '风球' };
         const myLabel = elemNames[bet.elementKing.choice];
         const actualLabel = elemNames[elementWinner];
@@ -849,22 +872,7 @@ io.on('connection', (socket) => {
       return;
     }
     if (force && gameState.status !== 'settled') {
-      const now = new Date().toISOString();
-      for (const [username, bet] of Object.entries(gameState.bets)) {
-        const user = users[username];
-        if (!user) continue;
-        const totalBetted = Object.values(bet).reduce((s, b) => s + (b.amount || 0), 0);
-        if (totalBetted > 0) {
-          user.coins = (user.coins || 0) + totalBetted;
-          user.coinLog = user.coinLog || [];
-          user.coinLog.push({
-            time: now, type: 'gain', amount: totalBetted,
-            reason: `第${gameState.round}局作废，押注 ${totalBetted} 币已回退`,
-            balance: user.coins
-          });
-        }
-      }
-      saveUsers(users);
+      refundAllBets(`第${gameState.round}局作废，押注已全额退还`);
     }
     if (gameState.status === 'settled' && gameState.redPlayer && gameState.bluePlayer) {
       const rs = parseInt(gameState.redScore);
@@ -886,6 +894,23 @@ io.on('connection', (socket) => {
     io.emit('game:update', buildGameInfo());
     io.emit('bet:update', buildBetSummary());
     io.emit('contest:update', buildContestStatus());
+  });
+
+  // PC 端：取消竞猜（betting 或 started 状态，退还所有押注，进入下一局）
+  socket.on('game:cancel', () => {
+    if (gameState.status !== 'betting') {
+      socket.emit('game:error', { message: '只能在竞猜开始后、比赛开始前取消竞猜' });
+      return;
+    }
+    refundAllBets(`第${gameState.round}局取消竞猜，押注已全额退还`);
+    const nextRound = gameState.round + 1;
+    gameState = createFreshGame();
+    gameState.round = nextRound;
+    io.emit('game:cancel', buildGameInfo());
+    io.emit('game:update', buildGameInfo());
+    io.emit('bet:update', buildBetSummary());
+    io.emit('contest:update', buildContestStatus());
+    console.log(`[Admin] cancel: refunded bets, -> round ${gameState.round}`);
   });
 
   // 手机端：下注
@@ -939,6 +964,10 @@ io.on('connection', (socket) => {
       }
       myBets.winBet = { side, amount: amt };
     } else if (betType === 'elementKing') {
+      if (gameState.gameType === 'hockey' && !(gameState.isMasterMode ?? true)) {
+        socket.emit('bet:error', { message: '当前模式不支持元素之王竞猜' });
+        return;
+      }
       if (!['ice', 'fire', 'wind'].includes(choice)) {
         socket.emit('bet:error', { message: '请选择元素' });
         return;
@@ -1068,13 +1097,14 @@ app.post('/api/admin/configure', (req, res) => {
     };
   }
 
-  const { matchName, gameType } = req.body;
+  const { matchName, gameType, isMasterMode } = req.body;
   const nextRound = gameState.status === 'settled' ? gameState.round + 1 : gameState.round;
   gameState = createFreshGame();
   gameState.round = nextRound;
 
   if (matchName) gameState.matchName = matchName;
   if (gameType && (gameType === 'hockey' || gameType === 'boxing')) gameState.gameType = gameType;
+  if (isMasterMode !== undefined) gameState.isMasterMode = !!isMasterMode;
 
   gameState.status = 'betting';
 
@@ -1111,16 +1141,17 @@ app.post('/api/admin/settle', (req, res) => {
 
   const { redScore, blueScore, iceBalls, fireBalls, windBalls, totalKnockdowns } = req.body;
   const isHockey = gameState.gameType === 'hockey';
+  const isMasterMode = gameState.isMasterMode ?? true;
 
   // 校验必填字段
   const missing = [];
   if (redScore === undefined || redScore === null || redScore === '') missing.push('红方分数');
   if (blueScore === undefined || blueScore === null || blueScore === '') missing.push('蓝方分数');
-  if (isHockey) {
+  if (isHockey && isMasterMode) {
     if (iceBalls === undefined || iceBalls === null) missing.push('冰球次数');
     if (fireBalls === undefined || fireBalls === null) missing.push('火球次数');
     if (windBalls === undefined || windBalls === null) missing.push('风球次数');
-  } else {
+  } else if (!isHockey) {
     if (totalKnockdowns === undefined || totalKnockdowns === null) missing.push('倒地次数');
   }
   if (missing.length > 0) {
@@ -1133,7 +1164,7 @@ app.post('/api/admin/settle', (req, res) => {
   let elementWinner = null;
   let ice = 0, fire = 0, wind = 0, knockdowns = 0;
 
-  if (isHockey) {
+  if (isHockey && isMasterMode) {
     ice = parseInt(iceBalls);
     fire = parseInt(fireBalls);
     wind = parseInt(windBalls);
@@ -1142,7 +1173,7 @@ app.post('/api/admin/settle', (req, res) => {
     if (ice === maxElem) elementWinner = 'ice';
     else if (fire === maxElem) elementWinner = 'fire';
     else elementWinner = 'wind';
-  } else {
+  } else if (!isHockey) {
     knockdowns = parseInt(totalKnockdowns);
   }
 
@@ -1172,7 +1203,7 @@ app.post('/api/admin/settle', (req, res) => {
 
     let totalBetted = 0;
     if (bet.winBet && bet.winBet.amount > 0) totalBetted += bet.winBet.amount;
-    if (isHockey && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
+    if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
     if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
     if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
     if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
@@ -1197,7 +1228,7 @@ app.post('/api/admin/settle', (req, res) => {
       }
     }
 
-    if (isHockey && bet.elementKing && bet.elementKing.amount > 0) {
+    if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) {
       const elemNames = { ice: '冰球', fire: '火球', wind: '风球' };
       const myLabel = elemNames[bet.elementKing.choice];
       const actualLabel = elemNames[elementWinner];
@@ -1339,6 +1370,24 @@ app.post('/api/admin/reset', (req, res) => {
   io.emit('contest:update', buildContestStatus());
 
   console.log(`[Admin] reset: -> round ${gameState.round}`);
+  res.json({ success: true, round: gameState.round });
+});
+
+// 取消竞猜（betting 或 started 状态，退还所有押注，进入下一局）
+app.post('/api/admin/cancel', (req, res) => {
+  if (!checkAdminToken(req, res)) return;
+  if (gameState.status !== 'betting') {
+    return res.status(400).json({ error: `只能在竞猜开始后、比赛开始前取消竞猜（当前状态：${gameState.status}）` });
+  }
+  refundAllBets(`第${gameState.round}局取消竞猜，押注已全额退还`);
+  const nextRound = gameState.round + 1;
+  gameState = createFreshGame();
+  gameState.round = nextRound;
+  io.emit('game:cancel', buildGameInfo());
+  io.emit('game:update', buildGameInfo());
+  io.emit('bet:update', buildBetSummary());
+  io.emit('contest:update', buildContestStatus());
+  console.log(`[Admin] cancel: refunded bets, -> round ${gameState.round}`);
   res.json({ success: true, round: gameState.round });
 });
 

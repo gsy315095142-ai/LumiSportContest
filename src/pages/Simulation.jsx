@@ -11,6 +11,7 @@ function Simulation() {
   const [resultData, setResultData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmNext, setConfirmNext] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [bottomTab, setBottomTab] = useState('bets');
 
   // 本地表单（选手由手机端参赛确认，PC 端仅配置赛事名和玩法）
@@ -70,6 +71,20 @@ function Simulation() {
       setTotalKnockdowns('');
       setConfirmNext(false);
     });
+    socket.on('game:cancel', (info) => {
+      setGameInfo(info);
+      if (info.gameType) setGameType(info.gameType);
+      if (info.matchName !== undefined) setMatchName(info.matchName);
+      setResultData(null);
+      setRedScore('');
+      setBlueScore('');
+      setIceBalls('');
+      setFireBalls('');
+      setWindBalls('');
+      setTotalKnockdowns('');
+      setConfirmCancel(false);
+      setConfirmNext(false);
+    });
     socket.on('bet:update', (summary) => setBetSummary(summary));
     socket.on('rank:update', (data) => setRankings(data));
     socket.on('game:error', (data) => {
@@ -108,6 +123,11 @@ function Simulation() {
   const handleNext = (force = false) => {
     socketRef.current?.emit('game:next', { force });
     setConfirmNext(false);
+  };
+
+  const handleCancel = () => {
+    socketRef.current?.emit('game:cancel');
+    setConfirmCancel(false);
   };
 
   const activeGameType = gameInfo?.gameType || gameType;
@@ -151,7 +171,7 @@ function Simulation() {
       {/* 错误提示 */}
       {errorMsg && <div className="sim-error">{errorMsg}</div>}
 
-      {/* 确认弹窗 */}
+      {/* 确认弹窗：进入下一局 */}
       {confirmNext && (
         <div className="sim-modal-overlay">
           <div className="sim-modal">
@@ -162,6 +182,22 @@ function Simulation() {
             <div className="sim-modal-buttons">
               <button className="btn-cancel" onClick={() => setConfirmNext(false)}>取消</button>
               <button className="btn-danger" onClick={() => handleNext(true)}>确定跳过</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 确认弹窗：取消竞猜 */}
+      {confirmCancel && (
+        <div className="sim-modal-overlay">
+          <div className="sim-modal">
+            <p>⚠️ 确定取消本局竞猜吗？</p>
+            <p style={{ fontSize: '14px', color: '#ffd93d', margin: '8px 0 0' }}>
+              本局所有用户的押注将全额退还，进入下一局。
+            </p>
+            <div className="sim-modal-buttons">
+              <button className="btn-cancel" onClick={() => setConfirmCancel(false)}>取消</button>
+              <button className="btn-danger" onClick={handleCancel}>确定取消竞猜</button>
             </div>
           </div>
         </div>
@@ -268,6 +304,13 @@ function Simulation() {
             disabled={status !== 'betting'}
           >
             🏒 比赛开始
+          </button>
+          <button
+            className="btn-danger"
+            onClick={() => setConfirmCancel(true)}
+            disabled={status !== 'betting'}
+          >
+            取消竞猜
           </button>
           <button
             className="btn-success"

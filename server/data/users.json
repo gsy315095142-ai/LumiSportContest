@@ -940,8 +940,8 @@
   },
   "虾饺": {
     "name": "虾饺",
-    "coins": 100,
-    "totalWinnings": 0,
+    "coins": 98.3,
+    "totalWinnings": 3.3000000000000003,
     "rating": 1501,
     "lastCheckin": null,
     "adWatchedToday": 0,
@@ -953,6 +953,357 @@
         "amount": 100,
         "reason": "新用户注册奖励",
         "balance": 100
+      },
+      {
+        "time": "2026-03-17T05:44:11.145Z",
+        "type": "spend",
+        "amount": 1,
+        "reason": "竞猜下注 · 1 第1局",
+        "balance": 99
+      },
+      {
+        "time": "2026-03-17T05:49:41.240Z",
+        "type": "spend",
+        "amount": 1,
+        "reason": "竞猜下注 · 2 第2局",
+        "balance": 98
+      },
+      {
+        "time": "2026-03-17T05:51:23.548Z",
+        "type": "gain",
+        "amount": 1.1,
+        "reason": "竞猜赢得 · 2 第2局",
+        "balance": 99.1
+      },
+      {
+        "time": "2026-03-17T07:10:41.738Z",
+        "type": "spend",
+        "amount": 1,
+        "reason": "竞猜下注 · 1 第6局",
+        "balance": 98.1
+      },
+      {
+        "time": "2026-03-17T07:10:47.512Z",
+        "type": "gain",
+        "amount": 1,
+        "reason": "第6局取消竞猜，押注已全额退还",
+        "balance": 99.1
+      },
+      {
+        "time": "2026-03-17T07:33:17.117Z",
+        "type": "spend",
+        "amount": 1,
+        "reason": "竞猜下注 · 1 第2局",
+        "balance": 98.1
+      },
+      {
+        "time": "2026-03-17T07:33:18.952Z",
+        "type": "gain",
+        "amount": 1,
+        "reason": "第2局取消竞猜，押注已全额退还",
+        "balance": 99.1
+      },
+      {
+        "time": "2026-03-17T07:35:48.443Z",
+        "type": "spend",
+        "amount": 2,
+        "reason": "竞猜下注 · 2 第4局",
+        "balance": 97.1
+      },
+      {
+        "time": "2026-03-17T07:37:29.991Z",
+        "type": "gain",
+        "amount": 2.2,
+        "reason": "竞猜赢得 · 2 第4局",
+        "balance": 99.3
+      },
+      {
+        "time": "2026-03-17T07:39:59.838Z",
+        "type": "spend",
+        "amount": 3,
+        "reason": "竞猜下注 · 3 第5局",
+        "balance": 96.3
+      },
+      {
+        "time": "2026-03-17T07:40:14.751Z",
+        "type": "gain",
+        "amount": 2,
+        "reason": "修改下注退还 · 3 第5局",
+        "balance": 98.3
+      },
+      {
+        "time": "2026-03-17T07:41:23.482Z",
+        "type": "spend",
+        "amount": 4,
+        "reason": "竞猜下注 · 1 第1局",
+        "balance": 94.3
+      },
+      {
+        "time": "2026-03-17T07:41:26.939Z",
+        "type": "gain",
+        "amount": 4,
+        "reason": "第1局取消竞猜，押注已全额退还",
+        "balance": 98.3
+      },
+      {
+        "time": "2026-03-17T07:44:35.483Z",
+        "type": "spend",
+        "amount": 54,
+        "reason": "竞猜下注 · 1 第2局",
+        "balance": 44.3
+      },
+      {
+        "time": "2026-03-17T07:44:37.801Z",
+        "type": "gain",
+        "amount": 54,
+        "reason": "第2局取消竞猜，押注已全额退还",
+        "balance": 98.3
+      },
+      {
+        "time": "2026-03-17T07:44:49.636Z",
+        "type": "spend",
+        "amount": 1,
+        "reason": "竞猜下注 · 1 第3局",
+        "balance": 97.3
+      },
+      {
+        "time": "2026-03-17T07:45:31.625Z",
+        "type": "gain",
+        "amount": 1,
+        "reason": "平局退还 · 1 第3局 · 胜负竞猜",
+        "balance": 98.3
+      }
+    ],
+    "history": [
+      {
+        "time": "2026-03-17T05:46:07.446Z",
+        "matchName": "1",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 35,
+        "redScore": 54,
+        "round": 1,
+        "totalBetted": 1,
+        "totalWon": 0,
+        "netResult": 0,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 1,
+            "actual": "红方胜",
+            "result": "未猜中",
+            "lost": 1
+          }
+        ]
+      },
+      {
+        "time": "2026-03-17T05:51:23.548Z",
+        "matchName": "2",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 29,
+        "redScore": 48,
+        "round": 2,
+        "totalBetted": 1,
+        "totalWon": 1.1,
+        "netResult": 1.0999999999999943,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "红方胜",
+            "amount": 1,
+            "actual": "红方胜",
+            "result": "猜中",
+            "won": 1.1
+          }
+        ]
+      },
+      {
+        "time": "2026-03-17T07:37:29.991Z",
+        "matchName": "2",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 35,
+        "redScore": 34,
+        "round": 4,
+        "totalBetted": 2,
+        "totalWon": 2.2,
+        "netResult": 2.200000000000003,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 2,
+            "actual": "蓝方胜",
+            "result": "猜中",
+            "won": 2.2
+          }
+        ]
+      },
+      {
+        "time": "2026-03-17T07:45:31.625Z",
+        "matchName": "1",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 1,
+        "redScore": 1,
+        "round": 3,
+        "totalBetted": 1,
+        "totalWon": 0,
+        "netResult": 1,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 1,
+            "actual": "平局",
+            "result": "平局",
+            "refund": 1
+          }
+        ]
+      }
+    ]
+  },
+  "周润发": {
+    "name": "周润发",
+    "coins": 1600000,
+    "totalWinnings": 1684000,
+    "rating": 1500,
+    "lastCheckin": "2026-03-17",
+    "adWatchedToday": 0,
+    "lastAdDate": null,
+    "coinLog": [
+      {
+        "time": "2026-03-17T07:52:09.042Z",
+        "type": "gain",
+        "amount": 100,
+        "reason": "新用户注册奖励",
+        "balance": 100
+      },
+      {
+        "time": "2026-03-17T07:52:10.475Z",
+        "type": "gain",
+        "amount": 100,
+        "reason": "每日签到",
+        "balance": 200
+      },
+      {
+        "time": "2026-03-17T07:52:59.136Z",
+        "type": "spend",
+        "amount": 200,
+        "reason": "竞猜下注 · 3 第10局",
+        "balance": 0
+      },
+      {
+        "time": "2026-03-17T07:53:21.292Z",
+        "type": "gain",
+        "amount": 4000,
+        "reason": "竞猜赢得 · 3 第10局",
+        "balance": 4000
+      },
+      {
+        "time": "2026-03-17T07:55:38.415Z",
+        "type": "spend",
+        "amount": 4000,
+        "reason": "竞猜下注 · 3 第11局",
+        "balance": 0
+      },
+      {
+        "time": "2026-03-17T07:55:43.470Z",
+        "type": "gain",
+        "amount": 80000,
+        "reason": "竞猜赢得 · 3 第11局",
+        "balance": 80000
+      },
+      {
+        "time": "2026-03-17T07:56:32.282Z",
+        "type": "spend",
+        "amount": 80000,
+        "reason": "竞猜下注 · 11 第12局",
+        "balance": 0
+      },
+      {
+        "time": "2026-03-17T07:56:40.088Z",
+        "type": "gain",
+        "amount": 1600000,
+        "reason": "竞猜赢得 · 11 第12局",
+        "balance": 1600000
+      }
+    ],
+    "history": [
+      {
+        "time": "2026-03-17T07:53:21.292Z",
+        "matchName": "3",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 100,
+        "redScore": 100,
+        "round": 10,
+        "totalBetted": 200,
+        "totalWon": 4000,
+        "netResult": 4000,
+        "details": [
+          {
+            "type": "精准总分",
+            "myBet": "200 分",
+            "amount": 200,
+            "actual": "200 分",
+            "result": "猜中",
+            "won": 4000
+          }
+        ]
+      },
+      {
+        "time": "2026-03-17T07:55:43.470Z",
+        "matchName": "3",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 100,
+        "redScore": 100,
+        "round": 11,
+        "totalBetted": 4000,
+        "totalWon": 80000,
+        "netResult": 80000,
+        "details": [
+          {
+            "type": "精准总分",
+            "myBet": "200 分",
+            "amount": 4000,
+            "actual": "200 分",
+            "result": "猜中",
+            "won": 80000
+          }
+        ]
+      },
+      {
+        "time": "2026-03-17T07:56:40.088Z",
+        "matchName": "11",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 100,
+        "redScore": 100,
+        "round": 12,
+        "totalBetted": 80000,
+        "totalWon": 1600000,
+        "netResult": 1600000,
+        "details": [
+          {
+            "type": "精准总分",
+            "myBet": "200 分",
+            "amount": 80000,
+            "actual": "200 分",
+            "result": "猜中",
+            "won": 1600000
+          }
+        ]
       }
     ]
   }
