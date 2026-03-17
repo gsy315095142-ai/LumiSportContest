@@ -14,7 +14,7 @@ import Simulation from './pages/Simulation'
 const tabs = [
   { id: 'overview', label: '📋 系统概览', component: Overview },
   { id: 'flow', label: '🔄 流程图', component: FlowChart },
-  { id: 'tier', label: '🎯 段位积分', component: TierSystem },
+  { id: 'tier', label: '🎯 选手积分', component: TierSystem },
   { id: 'odds', label: '💰 赔率对照', component: OddsTable },
   { id: 'quiz', label: '🎮 趣味竞猜', component: QuizModes },
   { id: 'quizTier', label: '🔮 竞猜段位', component: QuizTier },

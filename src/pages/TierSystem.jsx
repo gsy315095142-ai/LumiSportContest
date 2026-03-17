@@ -1,108 +1,103 @@
-import { tierData } from '../data/rulesData';
+import { ratingData } from '../data/rulesData';
 
 function TierSystem() {
   return (
     <div className="section-content">
-      <h2>🎯 段位积分系统</h2>
-      
-      {/* 数值设计目标 - 放在最前面 */}
+      <h2>🎯 选手积分系统</h2>
+
+      {/* 设计目标 */}
       <div className="design-goals-section">
-        <h3>📋 数值设计目标</h3>
+        <h3>📋 设计理念</h3>
         <div className="goals-grid">
           <div className="goal-card">
-            <div className="goal-icon">🛡️</div>
-            <div className="goal-title">保护新手</div>
-            <div className="goal-desc">弱者打强者，实力悬殊（高4段以上）输了<strong>不扣分</strong></div>
-          </div>
-          <div className="goal-card">
-            <div className="goal-icon">⚡</div>
-            <div className="goal-title">快速晋级</div>
-            <div className="goal-desc">同段位100%胜率，仅需<strong>5场</strong>升一段</div>
-          </div>
-          <div className="goal-card">
             <div className="goal-icon">⚖️</div>
-            <div className="goal-title">平衡体验</div>
-            <div className="goal-desc">同段位50%胜率，约<strong>14场</strong>升一段</div>
+            <div className="goal-title">简单直观</div>
+            <div className="goal-desc">抛弃复杂的段位制，采用<strong>纯积分</strong>，赢多少加多少，输多少扣多少</div>
+          </div>
+          <div className="goal-card">
+            <div className="goal-icon">🛡️</div>
+            <div className="goal-title">保底保护</div>
+            <div className="goal-desc">积分最低不低于 <strong>600 分</strong>，不会无限掉分</div>
+          </div>
+          <div className="goal-card">
+            <div className="goal-icon">🔄</div>
+            <div className="goal-title">零和机制</div>
+            <div className="goal-desc">一方加多少分，另一方就扣多少分，双方积分总和恒定不变</div>
           </div>
         </div>
       </div>
-      
-      {/* 数值模块 */}
-      <h3>📊 段位划分</h3>
-      <p className="hint">每500分一个段位，共7个段位</p>
+
+      {/* 基础参数 */}
+      <h3>📊 基础参数</h3>
       <table className="data-table tier-table">
         <thead>
-          <tr><th>段位</th><th>积分区间</th><th>标识</th></tr>
+          <tr><th>参数</th><th>数值</th><th>说明</th></tr>
         </thead>
         <tbody>
-          {tierData.tiers.map((t, i) => (
-            <tr key={i}>
-              <td className={t.class}>{t.name}</td>
-              <td>{t.range}</td>
-              <td>{t.icon}</td>
-            </tr>
-          ))}
+          <tr>
+            <td>初始积分</td>
+            <td><strong>{ratingData.defaultRating}</strong> 分</td>
+            <td>所有新注册选手统一从 1500 分开始</td>
+          </tr>
+          <tr>
+            <td>保底积分</td>
+            <td><strong>{ratingData.minRating}</strong> 分</td>
+            <td>积分不会低于 600，保护新手体验</td>
+          </tr>
+          <tr>
+            <td>积分上限</td>
+            <td><strong>无上限</strong></td>
+            <td>可无限累积，越高代表实力越强</td>
+          </tr>
         </tbody>
       </table>
-      
-      <h3>🔢 积分计算规则</h3>
+
+      {/* 积分计算规则 */}
+      <h3>🔢 积分结算规则</h3>
       <div className="highlight-box">
-        <strong>核心数值：</strong>同段位胜利 <strong>+100分</strong>，失败 <strong>-25分</strong>
+        <strong>核心公式：</strong>积分变化 = 比分差（绝对值）<br/>
+        <strong>胜方加分</strong> = |红方比分 − 蓝方比分|&emsp;
+        <strong>负方扣分</strong> = −|红方比分 − 蓝方比分|<br/>
+        <strong>平局：</strong>双方积分不变
       </div>
       <div className="highlight-box" style={{ marginTop: '8px', fontSize: '13px', opacity: 0.85 }}>
-        <strong>公式：</strong>胜方步长 ±15/段差，负方步长 ±10/段差 &nbsp;|&nbsp; 差3段及以上输给强者不扣分
+        <strong>零和机制：</strong>一方加多少分，另一方就扣多少分，双方积分总和恒定不变
       </div>
+
+      {/* 结算示例 */}
+      <h3>📝 结算示例</h3>
       <table className="data-table">
         <thead>
-          <tr><th>段位差距</th><th>获胜得分</th><th>失败扣分</th></tr>
+          <tr>
+            <th>赛前积分</th>
+            <th>比赛结果</th>
+            <th>比分差</th>
+            <th>红方变化</th>
+            <th>蓝方变化</th>
+            <th>说明</th>
+          </tr>
         </thead>
         <tbody>
-          {tierData.scoreRules.map((r, i) => (
+          {ratingData.settlementExamples.map((ex, i) => (
             <tr key={i}>
-              <td>{r.gap}</td>
-              <td className="win">{r.win}</td>
-              <td className={r.loseClass}>{r.lose}</td>
+              <td>红 {ex.red} / 蓝 {ex.blue}</td>
+              <td>{ex.score}</td>
+              <td>{ex.diff}</td>
+              <td className={ex.redChange.startsWith('+') || ex.redChange === '0' ? 'win' : 'lose'}>
+                {ex.redChange}
+              </td>
+              <td className={ex.blueChange.startsWith('+') || ex.blueChange === '0' ? 'win' : 'lose'}>
+                {ex.blueChange}
+              </td>
+              <td style={{ fontSize: '12px', opacity: 0.7 }}>{ex.desc}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      
-      <h3>📈 晋级规则</h3>
-      <table className="data-table">
-        <thead>
-          <tr><th>当前段位</th><th>目标段位</th><th>所需积分</th><th>全胜场次</th><th>50%胜率场次</th></tr>
-        </thead>
-        <tbody>
-          {tierData.promotionRules.map((r, i) => (
-            <tr key={i}>
-              <td className={`tier-${r.current.slice(0,2)}`}>{r.current}</td>
-              <td className={`tier-${r.target.slice(0,2)}`}>{r.target}</td>
-              <td>{r.points}</td>
-              <td>{r.wins}</td>
-              <td>{r.winRate50}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      
-      <div className="example-box">
-        <strong>💡 示例说明（50%胜率晋级）：</strong><br/>
-        小明是<strong>新手魔法师</strong>（0分），挑战同段位对手：<br/>
-        • 第1场：胜 +100分（总分100分）<br/>
-        • 第2场：负 -25分（总分75分）<br/>
-        • 第3场：胜 +100分（总分175分）<br/>
-        • ...（持续约7胜7负）<br/>
-        • 第14场后：总分达标 → <strong>晋级青铜魔法师！</strong><br/><br/>
-        <em>计算：7胜×100分 - 7负×25分 = 700 - 175 = 525分（达标晋级）</em>
-      </div>
-      
-      <h3>🏆 王者魔法师</h3>
-      <div className="highlight-box">
-        <strong>当积分达到3000分（王者魔法师）后：</strong><br/><br/>
-        • 不再显示段位名称，改为显示<strong>全国排名</strong><br/>
-        • 排名根据积分高低实时更新<br/>
-        • 显示格式：王者魔法师 · 全国第127名<br/>
-        • 积分无上限，可继续累积提升排名
+
+      {/* 跳转提示 */}
+      <div className="highlight-box" style={{ marginTop: '16px', textAlign: 'center' }}>
+        💡 选手的积分差会直接影响竞猜赔率，详情请查看 <strong>「赔率对照」</strong> 页面
       </div>
     </div>
   );
