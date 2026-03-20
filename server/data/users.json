@@ -1,11 +1,11 @@
 {
   "郭郭": {
     "name": "郭郭",
-    "coins": 274.2,
-    "totalWinnings": 46.2,
+    "coins": 335.2,
+    "totalWinnings": 102.2,
     "lastCheckin": "2026-03-10",
-    "adWatchedToday": 0,
-    "lastAdDate": null,
+    "adWatchedToday": 1,
+    "lastAdDate": "2026-03-20",
     "coinLog": [
       {
         "time": "2026-03-05T03:38:22.135Z",
@@ -90,6 +90,34 @@
         "amount": 10,
         "reason": "取消下注退还 · 004 第2局",
         "balance": 274.2
+      },
+      {
+        "time": "2026-03-20T03:02:27.546Z",
+        "type": "gain",
+        "amount": 30,
+        "reason": "观看广告",
+        "balance": 304.2
+      },
+      {
+        "time": "2026-03-20T03:03:42.211Z",
+        "type": "spend",
+        "amount": 10,
+        "reason": "竞猜下注 · 01 第1局",
+        "balance": 294.2
+      },
+      {
+        "time": "2026-03-20T03:04:02.299Z",
+        "type": "spend",
+        "amount": 15,
+        "reason": "竞猜下注 · 01 第1局",
+        "balance": 279.2
+      },
+      {
+        "time": "2026-03-20T03:05:05.318Z",
+        "type": "gain",
+        "amount": 56,
+        "reason": "竞猜赢得 · 01 第1局",
+        "balance": 335.2
       }
     ],
     "rating": 1499,
@@ -167,6 +195,37 @@
         "totalWon": 0,
         "netResult": 0,
         "details": []
+      },
+      {
+        "time": "2026-03-20T03:05:05.318Z",
+        "matchName": "01",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 26,
+        "redScore": 18,
+        "round": 1,
+        "totalBetted": 25,
+        "totalWon": 56,
+        "netResult": 31,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 10,
+            "actual": "蓝方胜",
+            "result": "猜中",
+            "won": 11
+          },
+          {
+            "type": "元素之王",
+            "myBet": "冰球",
+            "amount": 15,
+            "actual": "冰球",
+            "result": "猜中",
+            "won": 45
+          }
+        ]
       }
     ]
   },

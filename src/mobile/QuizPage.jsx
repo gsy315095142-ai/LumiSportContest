@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { formatCoins, netFromBetDetails } from '../utils/coinFormat.js';
 
 function QuizPage({ user, setUser }) {
   const socketRef = useRef(null);
@@ -120,7 +121,14 @@ function QuizPage({ user, setUser }) {
   }, [user.name, refreshUser]);
 
   const placeBet = (betType, extra) => {
-    socketRef.current?.emit('bet:place', { username: user.name, betType, ...extra });
+    const raw = extra?.amount;
+    const amt = typeof raw === 'string' ? parseInt(raw, 10) : parseInt(String(raw), 10);
+    if (!Number.isFinite(amt) || amt < 10) {
+      setError('单次下注至少需要 10 竞猜币');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    socketRef.current?.emit('bet:place', { username: user.name, betType, ...extra, amount: amt });
   };
 
   const cancelBet = (betType) => {
@@ -179,8 +187,17 @@ function QuizPage({ user, setUser }) {
 
   const handleAdError = () => {
     setAdPlaying(false);
+    setAdError('广告无法播放（网络异常、文件缺失或设备不支持该视频格式），未发放奖励。可检查网络或联系主持更换为 H.264 编码的 MP4 后重试。');
+  };
+
+  const handleAdRetry = () => {
     setAdError('');
-    handleAdEnded();
+    setAdPlaying(true);
+    const v = videoRef.current;
+    if (v) {
+      v.load();
+      v.play?.().catch(() => {});
+    }
   };
 
   const openHistory = async () => {
@@ -239,6 +256,19 @@ function QuizPage({ user, setUser }) {
     prevCoinsRef.current = user.coins;
   }, [user.coins, triggerCoinAnim]);
 
+  useEffect(() => {
+    if (!showAdModal) return;
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    const tryPlay = () => {
+      v.play?.().catch(() => {});
+    };
+    tryPlay();
+    v.addEventListener('canplay', tryPlay);
+    return () => v.removeEventListener('canplay', tryPlay);
+  }, [showAdModal]);
+
   const today = new Date().toISOString().slice(0, 10);
   const checkedIn = user.lastCheckin === today;
   const status = gameInfo?.status || 'waiting';
@@ -260,6 +290,10 @@ function QuizPage({ user, setUser }) {
   if (myBets.preciseDiff) totalBetted += myBets.preciseDiff.amount || 0;
 
   const mySettlement = resultData?.settlements?.find(s => s.username === user.name);
+  const myNet =
+    mySettlement != null
+      ? (netFromBetDetails(mySettlement.details) ?? mySettlement.netResult ?? 0)
+      : null;
 
   return (
     <div className="mobile-quiz">
@@ -267,8 +301,8 @@ function QuizPage({ user, setUser }) {
       <div className="mq-header">
         <div className="mq-user-info">
           <span className="mq-username">👤 {user.name}</span>
-          <span className="mq-coins" ref={coinTargetRef}>💰 {user.coins} 币</span>
-          {totalBetted > 0 && status !== 'settled' && <span className="mq-betted">已下注 {totalBetted} 币</span>}
+          <span className="mq-coins" ref={coinTargetRef}>💰 {formatCoins(user.coins)} 币</span>
+          {totalBetted > 0 && status !== 'settled' && <span className="mq-betted">已下注 {formatCoins(totalBetted)} 币</span>}
         </div>
         <div className="mq-actions">
           <div className="mq-actions-row">
@@ -301,14 +335,24 @@ function QuizPage({ user, setUser }) {
                 ref={videoRef}
                 src="/ads/ad.mp4"
                 autoPlay
+                muted
                 playsInline
+                controls
+                preload="auto"
                 onEnded={handleAdEnded}
                 onError={handleAdError}
                 style={{ width: '100%', maxHeight: '300px', background: '#000' }}
               />
             </div>
-            {adPlaying && <p className="mq-ad-hint">请观看完整广告...</p>}
-            <button onClick={() => setShowAdModal(false)} className="mq-btn-close">关闭</button>
+            {adPlaying && !adError && (
+              <p className="mq-ad-hint">请观看完整广告（若无画面请点击播放器播放；仍黑屏多为视频编码不兼容，可更换为 H.264 编码的 MP4）</p>
+            )}
+            {adError && (
+              <div className="mq-ad-actions">
+                <button type="button" onClick={handleAdRetry} className="mq-btn-small">重新加载</button>
+              </div>
+            )}
+            <button onClick={() => { setShowAdModal(false); setAdError(''); }} className="mq-btn-close">关闭</button>
           </div>
         </div>
       )}
@@ -327,20 +371,24 @@ function QuizPage({ user, setUser }) {
               {!historyLoading && historyData.map((h, idx) => {
                 const dt = new Date(h.time);
                 const timeStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+                const rowNet = netFromBetDetails(h.details) ?? h.netResult ?? 0;
                 return (
                   <div key={idx} className="mq-history-item">
                     <div className="mq-history-item-head">
                       <span className="mq-history-time">{timeStr}</span>
-                      <span className={`mq-history-won ${(h.netResult || 0) > 0 ? 'positive' : (h.netResult || 0) < 0 ? 'negative' : ''}`}>
-                        {(h.netResult || 0) > 0 ? `净赚 ${h.netResult} 币` : (h.netResult || 0) < 0 ? `亏损 ${Math.abs(h.netResult)} 币` : '不赚不亏'}
+                      <span className={`mq-history-won ${rowNet > 0 ? 'positive' : rowNet < 0 ? 'negative' : ''}`}>
+                        {rowNet > 0 ? `净赚 ${formatCoins(rowNet)} 币` : rowNet < 0 ? `亏损 ${formatCoins(Math.abs(rowNet))} 币` : '不赚不亏'}
                       </span>
                     </div>
                     <div className="mq-history-match">
                       {h.gameType === 'hockey' ? '🏒' : '🥊'} {h.matchName}
                       <span className="mq-history-vs">🔵{h.bluePlayer || '—'} {h.blueScore} : {h.redScore} {h.redPlayer || '—'}🔴</span>
                     </div>
+                    {h.details && h.details.length > 0 && (
+                      <div className="mq-history-my-entries-title">本局我的条目</div>
+                    )}
                     <div className="mq-history-details">
-                      {h.details.map((d, j) => {
+                      {(h.details || []).map((d, j) => {
                         const isHit = d.result === '猜中';
                         const isDraw = d.result === '平局';
                         return (
@@ -350,7 +398,7 @@ function QuizPage({ user, setUser }) {
                             {d.actual && <span className="mq-hd-actual">实际：{d.actual}</span>}
                             <span className={`mq-hd-result ${isHit ? 'hit' : isDraw ? 'draw' : 'miss'}`}>
                               {isHit ? '✅' : isDraw ? '⚖️' : '❌'}
-                              {d.won ? ` +${d.won}` : ''}{d.refund ? ` 退${d.refund}` : ''}{d.lost ? ` -${d.lost}` : ''}
+                              {d.won ? ` +${formatCoins(d.won)}` : ''}{d.refund ? ` 退${formatCoins(d.refund)}` : ''}{d.lost ? ` -${formatCoins(d.lost)}` : ''}
                             </span>
                           </div>
                         );
@@ -391,10 +439,10 @@ function QuizPage({ user, setUser }) {
                         <span className="mq-coinlog-amount info">ℹ️</span>
                       ) : (
                         <span className={`mq-coinlog-amount ${isGain ? 'gain' : 'spend'}`}>
-                          {isGain ? '+' : '-'}{log.amount}
+                          {isGain ? '+' : '-'}{formatCoins(log.amount)}
                         </span>
                       )}
-                      <span className="mq-coinlog-balance">余额 {log.balance}</span>
+                      <span className="mq-coinlog-balance">余额 {formatCoins(log.balance)}</span>
                     </div>
                   </div>
                 );
@@ -478,28 +526,31 @@ function QuizPage({ user, setUser }) {
             </div>
           </div>
           {mySettlement && (
-            <div className={`mq-my-result ${mySettlement.netResult > 0 ? 'won' : mySettlement.netResult === 0 ? 'even' : 'lost'}`}>
+            <div className={`mq-my-result ${myNet > 0 ? 'won' : myNet === 0 ? 'even' : 'lost'}`}>
               <div className="mq-my-result-summary">
-                {mySettlement.netResult > 0
-                  ? `🎉 恭喜！净赚 ${mySettlement.netResult} 币`
-                  : mySettlement.netResult === 0
+                {myNet > 0
+                  ? `🎉 恭喜！净赚 ${formatCoins(myNet)} 币`
+                  : myNet === 0
                     ? '😌 本局不赚不亏'
-                    : `😅 本局亏损 ${Math.abs(mySettlement.netResult)} 币`}
+                    : `😅 本局亏损 ${formatCoins(Math.abs(myNet))} 币`}
               </div>
+              {mySettlement.details && mySettlement.details.length > 0 && (
+                <div className="mq-result-my-entries-title">我的竞猜条目</div>
+              )}
               <div className="mq-result-details">
-                {mySettlement.details.map((d, i) => {
+                {(mySettlement.details || []).map((d, i) => {
                   const isHit = d.result === '猜中';
                   const isDraw = d.result === '平局';
                   return (
                     <div key={i} className={`mq-result-detail-item ${isHit ? 'hit' : isDraw ? 'draw' : 'miss'}`}>
                       <div className="mq-result-detail-type">{d.type}</div>
-                      {d.myBet && <div className="mq-result-detail-bet">我的竞猜：{d.myBet} · {d.amount} 币</div>}
+                      {d.myBet && <div className="mq-result-detail-bet">我的竞猜：{d.myBet} · {formatCoins(d.amount)} 币</div>}
                       {d.actual && <div className="mq-result-detail-actual">实际结果：{d.actual}</div>}
                       <div className={`mq-result-detail-outcome ${isHit ? 'hit' : isDraw ? 'draw' : 'miss'}`}>
                         {isHit ? '✅ 猜中' : isDraw ? '⚖️ 平局' : '❌ 未猜中'}
-                        {d.won ? ` +${d.won} 币` : ''}
-                        {d.refund ? ` 退${d.refund} 币` : ''}
-                        {d.lost ? ` -${d.lost} 币` : ''}
+                        {d.won ? ` +${formatCoins(d.won)} 币` : ''}
+                        {d.refund ? ` 退${formatCoins(d.refund)} 币` : ''}
+                        {d.lost ? ` -${formatCoins(d.lost)} 币` : ''}
                       </div>
                     </div>
                   );
@@ -540,10 +591,11 @@ function QuizPage({ user, setUser }) {
                     <label className="mq-amount-label">💰 押注金额</label>
                     <input
                       type="number"
-                      min="1"
+                      min="10"
+                      step="1"
                       value={winAmount}
                       onChange={e => setWinAmount(e.target.value)}
-                      placeholder="输入下注金额"
+                      placeholder="最少 10 币"
                     />
                   </div>
                   <div className="mq-bet-action-row">
@@ -559,13 +611,13 @@ function QuizPage({ user, setUser }) {
               )}
               {myBets.winBet && canBet && (
                 <div className="mq-bet-locked-row">
-                  <span className="mq-current-bet">✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {myBets.winBet.amount} 币</span>
+                  <span className="mq-current-bet">✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {formatCoins(myBets.winBet.amount)} 币</span>
                   <button onClick={() => cancelBet('winBet')} className="mq-btn-cancel">取消</button>
                 </div>
               )}
               {myBets.winBet && !canBet && (
                 <div className="mq-current-bet">
-                  ✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {myBets.winBet.amount} 币
+                  ✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {formatCoins(myBets.winBet.amount)} 币
                 </div>
               )}
             </div>
@@ -599,10 +651,11 @@ function QuizPage({ user, setUser }) {
                     <label className="mq-amount-label">💰 押注金额</label>
                     <input
                       type="number"
-                      min="1"
+                      min="10"
+                      step="1"
                       value={elemAmount}
                       onChange={e => setElemAmount(e.target.value)}
-                      placeholder="输入下注金额"
+                      placeholder="最少 10 币"
                     />
                   </div>
                   <div className="mq-bet-action-row">
@@ -618,13 +671,13 @@ function QuizPage({ user, setUser }) {
               )}
               {myBets.elementKing && canBet && (
                 <div className="mq-bet-locked-row">
-                  <span className="mq-current-bet">✅ 已下注：{{ ice: '冰球', fire: '火球', wind: '风球' }[myBets.elementKing.choice]} {myBets.elementKing.amount} 币</span>
+                  <span className="mq-current-bet">✅ 已下注：{{ ice: '冰球', fire: '火球', wind: '风球' }[myBets.elementKing.choice]} {formatCoins(myBets.elementKing.amount)} 币</span>
                   <button onClick={() => cancelBet('elementKing')} className="mq-btn-cancel">取消</button>
                 </div>
               )}
               {myBets.elementKing && !canBet && (
                 <div className="mq-current-bet">
-                  ✅ 已下注：{{ ice: '冰球', fire: '火球', wind: '风球' }[myBets.elementKing.choice]} {myBets.elementKing.amount} 币
+                  ✅ 已下注：{{ ice: '冰球', fire: '火球', wind: '风球' }[myBets.elementKing.choice]} {formatCoins(myBets.elementKing.amount)} 币
                 </div>
               )}
             </div>
@@ -648,10 +701,11 @@ function QuizPage({ user, setUser }) {
                     <label className="mq-amount-label">💰 押注金额</label>
                     <input
                       type="number"
-                      min="1"
+                      min="10"
+                      step="1"
                       value={knockdownAmount}
                       onChange={e => setKnockdownAmount(e.target.value)}
-                      placeholder="输入下注金额"
+                      placeholder="最少 10 币"
                     />
                   </div>
                   <div className="mq-bet-action-row">
@@ -667,12 +721,12 @@ function QuizPage({ user, setUser }) {
               )}
               {myBets.knockdownKing && canBet && (
                 <div className="mq-bet-locked-row">
-                  <span className="mq-current-bet">✅ 已下注：猜 {myBets.knockdownKing.value} 次 · {myBets.knockdownKing.amount} 币</span>
+                  <span className="mq-current-bet">✅ 已下注：猜 {myBets.knockdownKing.value} 次 · {formatCoins(myBets.knockdownKing.amount)} 币</span>
                   <button onClick={() => cancelBet('knockdownKing')} className="mq-btn-cancel">取消</button>
                 </div>
               )}
               {myBets.knockdownKing && !canBet && (
-                <div className="mq-current-bet">✅ 已下注：猜 {myBets.knockdownKing.value} 次 · {myBets.knockdownKing.amount} 币</div>
+                <div className="mq-current-bet">✅ 已下注：猜 {myBets.knockdownKing.value} 次 · {formatCoins(myBets.knockdownKing.amount)} 币</div>
               )}
             </div>
           ) : null}
@@ -697,10 +751,11 @@ function QuizPage({ user, setUser }) {
                   <label className="mq-amount-label">💰 押注金额</label>
                   <input
                     type="number"
-                    min="1"
+                    min="10"
+                    step="1"
                     value={totalAmount}
                     onChange={e => setTotalAmount(e.target.value)}
-                    placeholder="输入下注金额"
+                    placeholder="最少 10 币"
                   />
                 </div>
                 <div className="mq-bet-action-row">
@@ -716,12 +771,12 @@ function QuizPage({ user, setUser }) {
             )}
             {myBets.preciseTotal && canBet && (
               <div className="mq-bet-locked-row">
-                <span className="mq-current-bet">✅ 已下注：猜 {myBets.preciseTotal.value} 分 · {myBets.preciseTotal.amount} 币</span>
+                <span className="mq-current-bet">✅ 已下注：猜 {myBets.preciseTotal.value} 分 · {formatCoins(myBets.preciseTotal.amount)} 币</span>
                 <button onClick={() => cancelBet('preciseTotal')} className="mq-btn-cancel">取消</button>
               </div>
             )}
             {myBets.preciseTotal && !canBet && (
-              <div className="mq-current-bet">✅ 已下注：猜 {myBets.preciseTotal.value} 分 · {myBets.preciseTotal.amount} 币</div>
+              <div className="mq-current-bet">✅ 已下注：猜 {myBets.preciseTotal.value} 分 · {formatCoins(myBets.preciseTotal.amount)} 币</div>
             )}
           </div>
 
@@ -745,10 +800,11 @@ function QuizPage({ user, setUser }) {
                   <label className="mq-amount-label">💰 押注金额</label>
                   <input
                     type="number"
-                    min="1"
+                    min="10"
+                    step="1"
                     value={diffAmount}
                     onChange={e => setDiffAmount(e.target.value)}
-                    placeholder="输入下注金额"
+                    placeholder="最少 10 币"
                   />
                 </div>
                 <div className="mq-bet-action-row">
@@ -764,12 +820,12 @@ function QuizPage({ user, setUser }) {
             )}
             {myBets.preciseDiff && canBet && (
               <div className="mq-bet-locked-row">
-                <span className="mq-current-bet">✅ 已下注：猜 {myBets.preciseDiff.value} 分差 · {myBets.preciseDiff.amount} 币</span>
+                <span className="mq-current-bet">✅ 已下注：猜 {myBets.preciseDiff.value} 分差 · {formatCoins(myBets.preciseDiff.amount)} 币</span>
                 <button onClick={() => cancelBet('preciseDiff')} className="mq-btn-cancel">取消</button>
               </div>
             )}
             {myBets.preciseDiff && !canBet && (
-              <div className="mq-current-bet">✅ 已下注：猜 {myBets.preciseDiff.value} 分差 · {myBets.preciseDiff.amount} 币</div>
+              <div className="mq-current-bet">✅ 已下注：猜 {myBets.preciseDiff.value} 分差 · {formatCoins(myBets.preciseDiff.amount)} 币</div>
             )}
           </div>
         </div>
@@ -791,8 +847,8 @@ function QuizPage({ user, setUser }) {
                   <span className="mq-rank-tier">{r.tier.name}</span>
                 </div>
                 <div className="mq-rank-coins-col">
-                  <span className="mq-rank-winnings">累计赢 {r.name === user.name ? user.totalWinnings : r.totalWinnings}</span>
-                  <span className="mq-rank-balance">余额 {r.name === user.name ? user.coins : r.coins}</span>
+                  <span className="mq-rank-winnings">累计赢 {formatCoins(r.name === user.name ? user.totalWinnings : r.totalWinnings)}</span>
+                  <span className="mq-rank-balance">余额 {formatCoins(r.name === user.name ? user.coins : r.coins)}</span>
                 </div>
               </div>
             ))}

@@ -244,6 +244,12 @@
 .mq-ad-modal h3 { margin: 0 0 12px; }
 .mq-ad-video-container { border-radius: 8px; overflow: hidden; background: #000; }
 .mq-ad-hint { color: #aaa; font-size: 13px; margin: 8px 0 0; }
+.mq-ad-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
 .mq-btn-close {
   margin-top: 12px;
   padding: 8px 24px;
@@ -415,6 +421,14 @@
   font-weight: normal;
   color: #aaa;
   margin-top: 2px;
+}
+
+.mq-history-my-entries-title,
+.mq-result-my-entries-title {
+  font-size: 12px;
+  color: #999;
+  margin: 10px 0 6px;
+  font-weight: 600;
 }
 
 .mq-history-details {

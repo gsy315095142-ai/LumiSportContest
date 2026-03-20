@@ -79,6 +79,15 @@ function ensureUserRating(user) {
   return false;
 }
 
+/** 本局竞猜净盈亏（相对下注本金）：下注已在 bet:place 扣款，不能用结算前后余额差 */
+function computeBetNetResult(totalWon, totalBetted, details) {
+  let refundSum = 0;
+  for (const d of details) {
+    if (d.refund) refundSum += d.refund;
+  }
+  return Math.round((totalWon + refundSum - totalBetted) * 10) / 10;
+}
+
 /** 根据红蓝选手积分计算赔率，1.1~2.0，精确到小数点后2位 */
 function getOddsByRating(redPlayer, bluePlayer) {
   const redRating = getUserRating(redPlayer);
@@ -725,7 +734,6 @@ io.on('connection', (socket) => {
       if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
       if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
       if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
-      const coinsBefore = user.coins;
 
       const actualWinLabel = winSide === 'red' ? '红方胜' : winSide === 'blue' ? '蓝方胜' : '平局';
 
@@ -807,7 +815,7 @@ io.on('connection', (socket) => {
         }
       }
 
-      const netResult = user.coins - coinsBefore;
+      const netResult = computeBetNetResult(totalWon, totalBetted, details);
       settlements.push({ username, totalWon, totalBetted, netResult, details, newCoins: user.coins });
 
       // 竞猜币流水（下注扣减已在 bet:place 时记录，此处只记赢得/退还）
@@ -935,9 +943,9 @@ io.on('connection', (socket) => {
     }
     const myBets = gameState.bets[username];
 
-    const amt = parseInt(amount);
-    if (!amt || amt < 0) {
-      socket.emit('bet:error', { message: '请输入有效的下注金额' });
+    const amt = parseInt(amount, 10);
+    if (!Number.isFinite(amt) || amt < 10) {
+      socket.emit('bet:error', { message: amt > 0 && amt < 10 ? '单次下注至少需要 10 竞猜币' : '请输入有效的下注金额（最少 10 币）' });
       return;
     }
 
@@ -1208,8 +1216,6 @@ app.post('/api/admin/settle', (req, res) => {
     if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
     if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
 
-    const coinsBefore = user.coins;
-
     const actualWinLabel = winSide === 'red' ? '红方胜' : winSide === 'blue' ? '蓝方胜' : '平局';
 
     if (bet.winBet && bet.winBet.amount > 0) {
@@ -1285,7 +1291,7 @@ app.post('/api/admin/settle', (req, res) => {
       }
     }
 
-    const netResult = user.coins - coinsBefore;
+    const netResult = computeBetNetResult(totalWon, totalBetted, details);
     settlements.push({ username, totalWon, totalBetted, netResult, details, newCoins: user.coins });
 
     if (!user.coinLog) user.coinLog = [];

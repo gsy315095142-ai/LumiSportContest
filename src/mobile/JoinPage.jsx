@@ -165,35 +165,7 @@ function JoinPage({ user, setUser }) {
           </div>
         )}
 
-        {/* 比赛结束后、下一局开始前/中：展示上一局结果（含分数） */}
-        {(status === 'waiting' || status === 'betting') && gameInfo?.lastSettledMatch && (
-          <div className="mq-join-result-block" style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 12 }}>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
-              上一局结果
-              {gameInfo.lastSettledMatch.matchName && ` · ${gameInfo.lastSettledMatch.matchName}`}
-            </div>
-            <div className="mq-players-odds" style={{ marginBottom: 0 }}>
-              <div className="mq-player-box blue">
-                <div className="mq-player-side blue">
-                  <div className="mq-player-label">🔵 蓝方</div>
-                  <div className="mq-player-name">{gameInfo.lastSettledMatch.bluePlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.blueScore ?? '?'}</div>
-                </div>
-              </div>
-              <span className="mq-vs-sep mq-vs-gold">:</span>
-              <div className="mq-player-box red">
-                <div className="mq-player-side red">
-                  <div className="mq-player-label">🔴 红方</div>
-                  <div className="mq-player-name">{gameInfo.lastSettledMatch.redPlayer || '—'}</div>
-                  <div className="mq-player-rating mq-score">{gameInfo.lastSettledMatch.redScore ?? '?'}</div>
-                </div>
-              </div>
-            </div>
-            <div className="mq-status-msg settled" style={{ marginTop: 8 }}>
-              比分 {gameInfo.lastSettledMatch.blueScore ?? '?'} : {gameInfo.lastSettledMatch.redScore ?? '?'} · {gameInfo.lastSettledMatch.result || '已开奖'}
-            </div>
-          </div>
-        )}
+        {/* 新局 waiting/betting 时不再展示上一局对战结果（与竞猜页统一，见 game:update 清结果） */}
 
         {/* 报名中/比赛进行中：展示对战双方（左蓝方 VS 右红方，选手也可见） */}
         {(status === 'betting' || status === 'started') && (
