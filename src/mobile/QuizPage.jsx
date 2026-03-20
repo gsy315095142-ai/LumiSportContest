@@ -847,8 +847,7 @@ function QuizPage({ user, setUser }) {
                   <span className="mq-rank-tier">{r.tier.name}</span>
                 </div>
                 <div className="mq-rank-coins-col">
-                  <span className="mq-rank-winnings">累计赢 {formatCoins(r.name === user.name ? user.totalWinnings : r.totalWinnings)}</span>
-                  <span className="mq-rank-balance">余额 {formatCoins(r.name === user.name ? user.coins : r.coins)}</span>
+                  <span className="mq-rank-winnings">历史累计赢 {formatCoins(r.name === user.name ? user.totalWinnings : r.totalWinnings)}</span>
                 </div>
               </div>
             ))}
