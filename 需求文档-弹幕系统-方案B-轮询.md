@@ -53,13 +53,17 @@
   - `username`、`text` 必填；`text` 去首尾空格后长度 **1～40**（上限可配置）；
   - `username` 与已登录用户一致（服务端校验为已存在用户）；
   - **屏蔽字**：维护**屏蔽词列表**（可先配置文件或代码内数组，后续可改远程配置）。若 `text` 经检测**包含任一词**，**拒绝发送**，返回 `400` + 明确文案（如「内容包含不当词语」）；**必须以服务端为准**（防抓包绕过前端）。
-  - **频控**：同一 `username` 每 **2 秒最多 1 条**（可配置）；可选全站每秒条数上限。
+  - **频控**：同一 `username` 每 **5 秒最多 1 条**（可配置）；可选全站每秒条数上限。
 - **响应**：`{ ok, seq, ts }`。
 - **副作用**：写入队列；`io.emit('danmaku:message', { seq, ts, username, text })`。
 
-### 3.3 API：轮询 `GET /api/danmaku/poll?since=`
+### 3.3 API：轮询 `GET /api/danmaku/poll`
 
-- 语义与 v0.1 一致：返回 `seq > since` 的 `items`，带 `sessionId`、`latestSeq`；缓冲区滚动时约定 `truncated` 与游标修正（Unity 实现见第五节）。
+- **Query**：`since`（必填，数字）、`sessionId`（**建议必填**，与上次响应中的 `sessionId` 一致，URL 编码）。
+- **正常**：返回当前场次内 `seq > since` 的 `items`，以及 `sessionId`、`latestSeq`、`truncated`（环形缓冲丢弃旧序号时 `truncated: true`）。
+- **场次切换 / 序号重置后重同步**（任选其一即可触发服务端全量返回当前缓冲）：
+  1. **`sessionId` 与当前场次不一致**：返回 **当前缓冲内全部** `items`，`truncated: true`（客户端应更新本地 `sessionId` 与 `since`）。
+  2. **`since` 大于服务端 `latestSeq`**（例如新局序号从 0 再起，Unity 仍带上一局的 `since=50`）：视为游标过期，同样返回 **全部** `items`，`truncated: true`。
 
 ### 3.4 关于「清屏」与场次
 
@@ -89,7 +93,8 @@
 
 ### 4.3 数据通道
 
-- **推荐**：监听 Socket `danmaku:message`，与现有 `io()` 共用，低延迟上屏。
+- **实现**：手机端使用 **`SocketProvider`（`SocketContext.jsx`）** 全局只建 **一个** `io()` 连接；`QuizPage`、`JoinPage`、`DanmakuFlyLayer` 均通过 `useMobileSocket()` 复用，与需求「共用连接」一致。
+- **弹幕**：监听 `danmaku:message`，低延迟上屏。
 - **可选兜底**：仅 `poll`（一般不必）。
 
 ### 4.4 失败提示

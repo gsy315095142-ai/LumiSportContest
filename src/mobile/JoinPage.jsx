@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
+import { useState, useEffect } from 'react';
+import { useMobileSocket } from './SocketContext.jsx';
 
 const GAME_TYPE_NAMES = { hockey: '魔法冰球', boxing: '魔法拳王' };
 
 function JoinPage({ user, setUser }) {
-  const socketRef = useRef(null);
+  const socket = useMobileSocket();
   const [gameInfo, setGameInfo] = useState(null);
   const [contestStatus, setContestStatus] = useState(null);
   const [selectedSide, setSelectedSide] = useState(''); // 'red' | 'blue' | ''
@@ -15,14 +15,17 @@ function JoinPage({ user, setUser }) {
   const [ratingRankings, setRatingRankings] = useState([]);
 
   useEffect(() => {
-    const socket = io();
-    socketRef.current = socket;
+    if (!socket) return;
 
-    socket.on('connect', () => {
+    const requestMyBets = () => {
       socket.emit('bet:getMyBets', { username: user.name });
-    });
+    };
 
-    socket.on('game:update', (info) => {
+    const onConnect = () => {
+      requestMyBets();
+    };
+
+    const onGameUpdate = (info) => {
       setGameInfo(info);
       if (info.status === 'settled') {
         fetch('/api/rating-rankings')
@@ -30,19 +33,33 @@ function JoinPage({ user, setUser }) {
           .then(data => setRatingRankings(data.rankings || []))
           .catch(() => {});
       }
-    });
+    };
 
-    socket.on('contest:update', (status) => {
+    const onContestUpdate = (status) => {
       setContestStatus(status);
-    });
+    };
 
-    socket.on('contest:error', (data) => {
+    const onContestError = (data) => {
       setError(data.message || '操作失败');
       setTimeout(() => setError(''), 3000);
-    });
+    };
 
-    return () => { socket.disconnect(); };
-  }, [user.name]);
+    socket.on('connect', onConnect);
+    socket.on('game:update', onGameUpdate);
+    socket.on('contest:update', onContestUpdate);
+    socket.on('contest:error', onContestError);
+
+    if (socket.connected) {
+      requestMyBets();
+    }
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('game:update', onGameUpdate);
+      socket.off('contest:update', onContestUpdate);
+      socket.off('contest:error', onContestError);
+    };
+  }, [socket, user.name]);
 
   // 初始加载：从 REST 获取当前状态
   useEffect(() => {
@@ -94,11 +111,11 @@ function JoinPage({ user, setUser }) {
       setTimeout(() => setError(''), 3000);
       return;
     }
-    socketRef.current?.emit('contest:confirm', { name: user.name, side: selectedSide });
+    socket?.emit('contest:confirm', { name: user.name, side: selectedSide });
   };
 
   const handleCancel = () => {
-    socketRef.current?.emit('contest:cancel', { name: user.name });
+    socket?.emit('contest:cancel', { name: user.name });
   };
 
   const openMatchHistory = async () => {

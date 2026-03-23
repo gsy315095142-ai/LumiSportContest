@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import { formatCoins, netFromBetDetails } from '../utils/coinFormat.js';
+import { useMobileSocket } from './SocketContext.jsx';
 
 function QuizPage({ user, setUser }) {
-  const socketRef = useRef(null);
+  const socket = useMobileSocket();
   const [gameInfo, setGameInfo] = useState(null);
   const [myBets, setMyBets] = useState({});
   const [rankings, setRankings] = useState([]);
@@ -46,20 +46,38 @@ function QuizPage({ user, setUser }) {
     } catch {}
   }, [user.name, setUser]);
 
+  /** 段位榜仅依赖 socket 推送时，切 Tab 卸载页面会丢 state，且不会触发新的 connection 推送；用 HTTP 与推送双通道对齐 JoinPage 的选手榜 */
+  const loadRankings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/rankings');
+      if (res.ok) {
+        const data = await res.json();
+        setRankings(Array.isArray(data.rankings) ? data.rankings : []);
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
-    const socket = io();
-    socketRef.current = socket;
+    loadRankings();
+  }, [loadRankings]);
 
-    socket.on('connect', () => {
+  useEffect(() => {
+    if (!socket) return;
+
+    const requestMyBets = () => {
       socket.emit('bet:getMyBets', { username: user.name });
-    });
+    };
 
-    socket.on('game:update', (info) => {
+    const onConnect = () => {
+      requestMyBets();
+      loadRankings();
+    };
+
+    const onGameUpdate = (info) => {
       setGameInfo(info);
       if (info.status === 'betting' || info.status === 'waiting') {
         setResultData(null);
       }
-      // 局号变化时（例如 Unity 直接 HTTP 开启下一局），清除上一局的下注状态
       if (lastRoundRef.current !== null && info.round !== lastRoundRef.current) {
         setMyBets({});
         setWinSide(''); setWinAmount('');
@@ -69,9 +87,9 @@ function QuizPage({ user, setUser }) {
         setDiffGuess(''); setDiffAmount('');
       }
       lastRoundRef.current = info.round;
-    });
+    };
 
-    socket.on('game:next', () => {
+    const onGameNext = () => {
       setMyBets({});
       setResultData(null);
       setWinSide(''); setWinAmount('');
@@ -79,9 +97,9 @@ function QuizPage({ user, setUser }) {
       setKnockdownGuess(''); setKnockdownAmount('');
       setTotalGuess(''); setTotalAmount('');
       setDiffGuess(''); setDiffAmount('');
-    });
+    };
 
-    socket.on('game:cancel', () => {
+    const onGameCancel = () => {
       setMyBets({});
       setResultData(null);
       setWinSide(''); setWinAmount('');
@@ -90,35 +108,62 @@ function QuizPage({ user, setUser }) {
       setTotalGuess(''); setTotalAmount('');
       setDiffGuess(''); setDiffAmount('');
       refreshUser();
-    });
+    };
 
-    socket.on('game:result', (data) => {
+    const onGameResult = (data) => {
       setResultData(data);
       refreshUser();
-    });
+    };
 
-    socket.on('user:coins', (data) => {
+    const onUserCoins = (data) => {
       setUser(prev => prev ? { ...prev, coins: data.coins } : prev);
-    });
+    };
 
-    socket.on('bet:myBets', (bets) => {
+    const onBetMyBets = (bets) => {
       setMyBets(bets);
       if (bets.winBet) { setWinSide(bets.winBet.side); setWinAmount(String(bets.winBet.amount)); }
       if (bets.elementKing) { setElemChoice(bets.elementKing.choice); setElemAmount(String(bets.elementKing.amount)); }
       if (bets.knockdownKing) { setKnockdownGuess(String(bets.knockdownKing.value)); setKnockdownAmount(String(bets.knockdownKing.amount)); }
       if (bets.preciseTotal) { setTotalGuess(String(bets.preciseTotal.value)); setTotalAmount(String(bets.preciseTotal.amount)); }
       if (bets.preciseDiff) { setDiffGuess(String(bets.preciseDiff.value)); setDiffAmount(String(bets.preciseDiff.amount)); }
-    });
+    };
 
-    socket.on('bet:error', (data) => {
+    const onBetError = (data) => {
       setError(data.message);
       setTimeout(() => setError(''), 3000);
-    });
+    };
 
-    socket.on('rank:update', (data) => setRankings(data));
+    const onRankUpdate = (data) => {
+      setRankings(Array.isArray(data) ? data : []);
+    };
 
-    return () => { socket.disconnect(); };
-  }, [user.name, refreshUser]);
+    socket.on('connect', onConnect);
+    socket.on('game:update', onGameUpdate);
+    socket.on('game:next', onGameNext);
+    socket.on('game:cancel', onGameCancel);
+    socket.on('game:result', onGameResult);
+    socket.on('user:coins', onUserCoins);
+    socket.on('bet:myBets', onBetMyBets);
+    socket.on('bet:error', onBetError);
+    socket.on('rank:update', onRankUpdate);
+
+    if (socket.connected) {
+      requestMyBets();
+      loadRankings();
+    }
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('game:update', onGameUpdate);
+      socket.off('game:next', onGameNext);
+      socket.off('game:cancel', onGameCancel);
+      socket.off('game:result', onGameResult);
+      socket.off('user:coins', onUserCoins);
+      socket.off('bet:myBets', onBetMyBets);
+      socket.off('bet:error', onBetError);
+      socket.off('rank:update', onRankUpdate);
+    };
+  }, [socket, user.name, refreshUser, setUser, loadRankings]);
 
   const placeBet = (betType, extra) => {
     const raw = extra?.amount;
@@ -128,11 +173,11 @@ function QuizPage({ user, setUser }) {
       setTimeout(() => setError(''), 3000);
       return;
     }
-    socketRef.current?.emit('bet:place', { username: user.name, betType, ...extra, amount: amt });
+    socket?.emit('bet:place', { username: user.name, betType, ...extra, amount: amt });
   };
 
   const cancelBet = (betType) => {
-    socketRef.current?.emit('bet:cancel', { username: user.name, betType });
+    socket?.emit('bet:cancel', { username: user.name, betType });
     if (betType === 'winBet') { setWinSide(''); setWinAmount(''); }
     if (betType === 'elementKing') { setElemChoice(''); setElemAmount(''); }
     if (betType === 'knockdownKing') { setKnockdownGuess(''); setKnockdownAmount(''); }

@@ -565,7 +565,8 @@ app.get('/api/match-history/:name', (req, res) => {
 
 const DANMAKU_MAX_LEN = 40;
 const DANMAKU_RING_MAX = 500;
-const DANMAKU_INTERVAL_MS = 2000;
+/** 同一账号两次发送的最小间隔 */
+const DANMAKU_INTERVAL_MS = 5000;
 /** 命中则拒绝发送；可在服务端随时增删 */
 const DANMAKU_BLOCKED_WORDS = ['傻逼', 'nmsl', 'fuck', 'shit'];
 
@@ -573,6 +574,25 @@ let danmakuSeq = 0;
 const danmakuRing = [];
 let danmakuSessionKey = '';
 const danmakuLastSendMs = {};
+/** 超过该时间未再发弹幕则视为不活跃，从频控表中删除（避免长时间运行只增不减） */
+const DANMAKU_LAST_SEND_STALE_MS = 60 * 60 * 1000;
+const DANMAKU_LAST_SEND_PRUNE_INTERVAL_MS = 15 * 60 * 1000;
+
+function pruneDanmakuLastSendMs() {
+  const cutoff = Date.now() - DANMAKU_LAST_SEND_STALE_MS;
+  let removed = 0;
+  for (const k of Object.keys(danmakuLastSendMs)) {
+    if (danmakuLastSendMs[k] < cutoff) {
+      delete danmakuLastSendMs[k];
+      removed += 1;
+    }
+  }
+  if (removed > 0) {
+    console.log(`[danmaku] pruned ${removed} stale rate-limit entries`);
+  }
+}
+
+setInterval(pruneDanmakuLastSendMs, DANMAKU_LAST_SEND_PRUNE_INTERVAL_MS);
 
 function ensureDanmakuSession() {
   const key = `${gameState.matchName || ''}|${gameState.round}`;
@@ -612,7 +632,7 @@ app.post('/api/danmaku/send', (req, res) => {
   const now = Date.now();
   const last = danmakuLastSendMs[name] || 0;
   if (now - last < DANMAKU_INTERVAL_MS) {
-    return res.status(429).json({ error: '发送过于频繁，请稍后再试' });
+    return res.status(429).json({ error: '发送过于频繁，每 5 秒只能发 1 条' });
   }
   danmakuLastSendMs[name] = now;
   danmakuSeq += 1;
@@ -629,13 +649,32 @@ app.post('/api/danmaku/send', (req, res) => {
 });
 
 app.get('/api/danmaku/poll', (req, res) => {
+  const clientSessionRaw = req.query.sessionId != null ? String(req.query.sessionId) : '';
   ensureDanmakuSession();
+  const sessionId = danmakuSessionKey;
+
   const since = parseInt(req.query.since, 10);
   const s = Number.isFinite(since) ? since : 0;
-  const sessionId = danmakuSessionKey;
-  const minSeq = danmakuRing.length ? danmakuRing[0].seq : danmakuSeq + 1;
-  const truncated = danmakuRing.length > 0 && s < minSeq - 1;
-  const items = danmakuRing.filter((it) => it.seq > s);
+
+  /** 客户端仍持上一场的 sessionId，场次已换 */
+  const sessionMismatch = clientSessionRaw !== '' && clientSessionRaw !== sessionId;
+  /**
+   * 场次重置后 danmakuSeq 从 0 再起，若 Unity 仍带上一场的大 since（如 50），
+   * 会出现 seq > s 恒为假且 truncated 误判为 false —— 应用全量重同步。
+   */
+  const staleSinceCursor = s > danmakuSeq;
+
+  let items;
+  let truncated;
+  if (sessionMismatch || staleSinceCursor) {
+    items = danmakuRing.slice();
+    truncated = true;
+  } else {
+    const minSeq = danmakuRing.length ? danmakuRing[0].seq : danmakuSeq + 1;
+    truncated = danmakuRing.length > 0 && s < minSeq - 1;
+    items = danmakuRing.filter((it) => it.seq > s);
+  }
+
   res.json({
     sessionId,
     latestSeq: danmakuSeq,

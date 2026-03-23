@@ -1,6 +1,12 @@
 /* ========== 手机端全局 ========== */
 /* /mobile 路由：取消 body 的 flex 居中，铺满视口；配合 viewport interactive-widget=overlays-content，键盘以覆盖方式出现，不整体上推底栏 */
 
+html.mobile-app-route {
+  /* iOS：避免 100vh 与可视区域不一致导致底部出现「空出一条」 */
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+}
+
 html.mobile-app-route,
 html.mobile-app-route body {
   height: 100%;
@@ -33,7 +39,8 @@ body.mobile-app-route #root {
 .mobile-tab-content {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0));
+  /* 与底栏实际高度大致对齐（底栏已收紧 padding） */
+  padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ========== 底部导航（固定底部，滚动时始终可见） ========== */
@@ -43,12 +50,15 @@ body.mobile-app-route #root {
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  /* 仅保留安全区与最小触控留白，避免 8px+safe 叠出「栏整体上移」观感 */
+  padding: 6px 0 max(env(safe-area-inset-bottom, 0px), 6px);
   /* 锚定在布局视口底部；配合 interactive-widget=overlays-content，键盘覆盖内容而非整体上推底栏 */
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 8px 0;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1451,4 +1461,47 @@ body.mobile-app-route #root {
 .mq-match-history-item .mq-match-rating-change {
   font-size: 13px;
   margin-top: 4px;
+}
+
+/* ========== Error Boundary 兜底（避免子组件抛错导致白屏）========== */
+
+.mobile-app-error-boundary {
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+}
+
+.mobile-app-error-boundary-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mobile-app-error-boundary-hint {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+.mobile-app-error-boundary-retry {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.mobile-app-error-boundary-retry:active {
+  opacity: 0.85;
 }
