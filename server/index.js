@@ -561,6 +561,89 @@ app.get('/api/match-history/:name', (req, res) => {
   res.json({ history: userHistory });
 });
 
+// ========== 弹幕（内存队列；手机 Socket 实时 + Unity poll）==========
+
+const DANMAKU_MAX_LEN = 40;
+const DANMAKU_RING_MAX = 500;
+const DANMAKU_INTERVAL_MS = 2000;
+/** 命中则拒绝发送；可在服务端随时增删 */
+const DANMAKU_BLOCKED_WORDS = ['傻逼', 'nmsl', 'fuck', 'shit'];
+
+let danmakuSeq = 0;
+const danmakuRing = [];
+let danmakuSessionKey = '';
+const danmakuLastSendMs = {};
+
+function ensureDanmakuSession() {
+  const key = `${gameState.matchName || ''}|${gameState.round}`;
+  if (key !== danmakuSessionKey) {
+    danmakuSessionKey = key;
+    danmakuRing.length = 0;
+    danmakuSeq = 0;
+  }
+}
+
+function danmakuContainsBlocked(text) {
+  const t = String(text);
+  const lower = t.toLowerCase();
+  for (const w of DANMAKU_BLOCKED_WORDS) {
+    if (!w) continue;
+    if (/[^\x00-\x7f]/.test(w)) {
+      if (t.includes(w)) return true;
+    } else if (lower.includes(w.toLowerCase())) return true;
+  }
+  return false;
+}
+
+app.post('/api/danmaku/send', (req, res) => {
+  ensureDanmakuSession();
+  const { username, text } = req.body || {};
+  const name = typeof username === 'string' ? username.trim() : '';
+  const raw = typeof text === 'string' ? text.trim() : '';
+  if (!name || !users[name]) {
+    return res.status(404).json({ error: '用户不存在' });
+  }
+  if (!raw.length || raw.length > DANMAKU_MAX_LEN) {
+    return res.status(400).json({ error: `弹幕长度为 1～${DANMAKU_MAX_LEN} 字` });
+  }
+  if (danmakuContainsBlocked(raw)) {
+    return res.status(400).json({ error: '内容包含不当词语' });
+  }
+  const now = Date.now();
+  const last = danmakuLastSendMs[name] || 0;
+  if (now - last < DANMAKU_INTERVAL_MS) {
+    return res.status(429).json({ error: '发送过于频繁，请稍后再试' });
+  }
+  danmakuLastSendMs[name] = now;
+  danmakuSeq += 1;
+  const item = {
+    seq: danmakuSeq,
+    ts: new Date().toISOString(),
+    username: name,
+    text: raw,
+  };
+  danmakuRing.push(item);
+  while (danmakuRing.length > DANMAKU_RING_MAX) danmakuRing.shift();
+  io.emit('danmaku:message', item);
+  res.json({ ok: true, seq: item.seq, ts: item.ts });
+});
+
+app.get('/api/danmaku/poll', (req, res) => {
+  ensureDanmakuSession();
+  const since = parseInt(req.query.since, 10);
+  const s = Number.isFinite(since) ? since : 0;
+  const sessionId = danmakuSessionKey;
+  const minSeq = danmakuRing.length ? danmakuRing[0].seq : danmakuSeq + 1;
+  const truncated = danmakuRing.length > 0 && s < minSeq - 1;
+  const items = danmakuRing.filter((it) => it.seq > s);
+  res.json({
+    sessionId,
+    latestSeq: danmakuSeq,
+    truncated,
+    items,
+  });
+});
+
 // ========== Socket.IO ==========
 
 io.on('connection', (socket) => {
