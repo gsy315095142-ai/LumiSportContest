@@ -226,5 +226,17 @@
     "redRatingChange": 0,
     "blueRatingChange": 0,
     "result": "平局"
+  },
+  {
+    "time": "2026-03-20T03:26:37.338Z",
+    "matchName": "02",
+    "gameType": "hockey",
+    "redPlayer": null,
+    "bluePlayer": "郭郭",
+    "redScore": 26,
+    "blueScore": 23,
+    "redRatingChange": 0,
+    "blueRatingChange": 0,
+    "result": "平局"
   }
 ]
