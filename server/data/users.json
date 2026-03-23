@@ -1,8 +1,8 @@
 {
   "郭郭": {
     "name": "郭郭",
-    "coins": 335.2,
-    "totalWinnings": 102.2,
+    "coins": 338.2,
+    "totalWinnings": 135.2,
     "lastCheckin": "2026-03-10",
     "adWatchedToday": 1,
     "lastAdDate": "2026-03-20",
@@ -118,6 +118,34 @@
         "amount": 56,
         "reason": "竞猜赢得 · 01 第1局",
         "balance": 335.2
+      },
+      {
+        "time": "2026-03-23T06:58:42.309Z",
+        "type": "spend",
+        "amount": 15,
+        "reason": "竞猜下注 · 01 第1局",
+        "balance": 320.2
+      },
+      {
+        "time": "2026-03-23T07:00:20.689Z",
+        "type": "gain",
+        "amount": 16.5,
+        "reason": "竞猜赢得 · 01 第1局",
+        "balance": 336.7
+      },
+      {
+        "time": "2026-03-23T07:17:39.113Z",
+        "type": "spend",
+        "amount": 15,
+        "reason": "竞猜下注 · 02 第1局",
+        "balance": 321.7
+      },
+      {
+        "time": "2026-03-23T07:18:07.522Z",
+        "type": "gain",
+        "amount": 16.5,
+        "reason": "竞猜赢得 · 02 第1局",
+        "balance": 338.2
       }
     ],
     "rating": 1499,
@@ -224,6 +252,52 @@
             "actual": "冰球",
             "result": "猜中",
             "won": 45
+          }
+        ]
+      },
+      {
+        "time": "2026-03-23T07:00:20.689Z",
+        "matchName": "01",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 26,
+        "redScore": 25,
+        "round": 1,
+        "totalBetted": 15,
+        "totalWon": 16.5,
+        "netResult": 1.5,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 15,
+            "actual": "蓝方胜",
+            "result": "猜中",
+            "won": 16.5
+          }
+        ]
+      },
+      {
+        "time": "2026-03-23T07:18:07.522Z",
+        "matchName": "02",
+        "gameType": "hockey",
+        "redPlayer": null,
+        "bluePlayer": null,
+        "blueScore": 28,
+        "redScore": 26,
+        "round": 1,
+        "totalBetted": 15,
+        "totalWon": 16.5,
+        "netResult": 1.5,
+        "details": [
+          {
+            "type": "胜负竞猜",
+            "myBet": "蓝方胜",
+            "amount": 15,
+            "actual": "蓝方胜",
+            "result": "猜中",
+            "won": 16.5
           }
         ]
       }

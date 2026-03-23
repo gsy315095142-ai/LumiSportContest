@@ -61,6 +61,23 @@ function QuizPage({ user, setUser }) {
     loadRankings();
   }, [loadRankings]);
 
+  /** 与参赛页一致：挂载时拉取当局状态，避免切 Tab 卸载后 gameInfo 为空、status 误显示为 waiting/betting */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/game');
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.gameInfo) setGameInfo(data.gameInfo);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -334,10 +351,12 @@ function QuizPage({ user, setUser }) {
   if (myBets.preciseTotal) totalBetted += myBets.preciseTotal.amount || 0;
   if (myBets.preciseDiff) totalBetted += myBets.preciseDiff.amount || 0;
 
-  const mySettlement = resultData?.settlements?.find(s => s.username === user.name);
+  /** Socket 推送或 buildGameInfo.lastGameResult（切 Tab 重进后仍可用） */
+  const effectiveResult = resultData ?? gameInfo?.lastGameResult;
+  const mySettlement = effectiveResult?.settlements?.find((s) => s.username === user.name);
   const myNet =
     mySettlement != null
-      ? (netFromBetDetails(mySettlement.details) ?? mySettlement.netResult ?? 0)
+      ? (mySettlement.netResult ?? netFromBetDetails(mySettlement.details) ?? 0)
       : null;
 
   return (
@@ -416,7 +435,7 @@ function QuizPage({ user, setUser }) {
               {!historyLoading && historyData.map((h, idx) => {
                 const dt = new Date(h.time);
                 const timeStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
-                const rowNet = netFromBetDetails(h.details) ?? h.netResult ?? 0;
+                const rowNet = h.netResult ?? netFromBetDetails(h.details) ?? 0;
                 return (
                   <div key={idx} className="mq-history-item">
                     <div className="mq-history-item-head">
@@ -538,36 +557,36 @@ function QuizPage({ user, setUser }) {
       </div>
 
       {/* 开奖结果（个人） */}
-      {(resultData || (status === 'settled' && gameInfo)) && (
+      {(effectiveResult || (status === 'settled' && gameInfo)) && (
         <div className="mq-result-card">
-          {/* 比赛比分（优先 resultData，fallback gameInfo） */}
+          {/* 比赛比分（优先 effectiveResult，fallback gameInfo） */}
           <div className="mq-result-score">
-            <span className="blue-text">🔵 {resultData?.blueScore ?? gameInfo?.blueScore ?? '?'}</span>
+            <span className="blue-text">🔵 {effectiveResult?.blueScore ?? gameInfo?.blueScore ?? '?'}</span>
             <span> : </span>
-            <span className="red-text">{resultData?.redScore ?? gameInfo?.redScore ?? '?'} 🔴</span>
+            <span className="red-text">{effectiveResult?.redScore ?? gameInfo?.redScore ?? '?'} 🔴</span>
           </div>
           {/* 本局开奖结果 - 各竞猜条目实际结果 */}
           <div className="mq-result-info">
-            <span>胜方：{(resultData?.winSide ?? gameInfo?.winSide) === 'blue' ? '蓝方' : (resultData?.winSide ?? gameInfo?.winSide) === 'red' ? '红方' : '平局'}</span>
-            {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
-              ? <span>元素之王：{{ ice: '❄️ 冰', fire: '🔥 火', wind: '🌪️ 风' }[resultData?.elementWinner] ?? '—'}</span>
-              : (resultData?.gameType ?? gameInfo?.gameType) !== 'hockey'
-                ? <span>倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</span>
+            <span>胜方：{(effectiveResult?.winSide ?? gameInfo?.winSide) === 'blue' ? '蓝方' : (effectiveResult?.winSide ?? gameInfo?.winSide) === 'red' ? '红方' : '平局'}</span>
+            {(effectiveResult?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
+              ? <span>元素之王：{{ ice: '❄️ 冰', fire: '🔥 火', wind: '🌪️ 风' }[effectiveResult?.elementWinner] ?? '—'}</span>
+              : (effectiveResult?.gameType ?? gameInfo?.gameType) !== 'hockey'
+                ? <span>倒地总和：{effectiveResult?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</span>
                 : null
             }
           </div>
           <div className="mq-result-actual-outcomes">
             <div className="mq-result-actual-title">📋 本局开奖结果</div>
             <div className="mq-result-actual-list">
-              <div className="mq-result-actual-item">胜负：{(resultData?.winSide ?? gameInfo?.winSide) === 'red' ? '🔴 红方胜' : (resultData?.winSide ?? gameInfo?.winSide) === 'blue' ? '🔵 蓝方胜' : '⚖️ 平局'}</div>
-              {(resultData?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
-                ? <div className="mq-result-actual-item">元素之王：{{ ice: '❄️ 冰球', fire: '🔥 火球', wind: '🌪️ 风球' }[resultData?.elementWinner] ?? '—'}</div>
-                : (resultData?.gameType ?? gameInfo?.gameType) !== 'hockey'
-                  ? <div className="mq-result-actual-item">倒地总和：{resultData?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</div>
+              <div className="mq-result-actual-item">胜负：{(effectiveResult?.winSide ?? gameInfo?.winSide) === 'red' ? '🔴 红方胜' : (effectiveResult?.winSide ?? gameInfo?.winSide) === 'blue' ? '🔵 蓝方胜' : '⚖️ 平局'}</div>
+              {(effectiveResult?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
+                ? <div className="mq-result-actual-item">元素之王：{{ ice: '❄️ 冰球', fire: '🔥 火球', wind: '🌪️ 风球' }[effectiveResult?.elementWinner] ?? '—'}</div>
+                : (effectiveResult?.gameType ?? gameInfo?.gameType) !== 'hockey'
+                  ? <div className="mq-result-actual-item">倒地总和：{effectiveResult?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</div>
                   : null
               }
-              <div className="mq-result-actual-item">精准总分：{resultData?.totalScore ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? (parseInt(gameInfo.redScore) + parseInt(gameInfo.blueScore)) : '—')}</div>
-              <div className="mq-result-actual-item">精准分差：{resultData?.scoreDiff ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? Math.abs(parseInt(gameInfo.redScore) - parseInt(gameInfo.blueScore)) : '—')}</div>
+              <div className="mq-result-actual-item">精准总分：{effectiveResult?.totalScore ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? (parseInt(gameInfo.redScore) + parseInt(gameInfo.blueScore)) : '—')}</div>
+              <div className="mq-result-actual-item">精准分差：{effectiveResult?.scoreDiff ?? (gameInfo?.redScore != null && gameInfo?.blueScore != null ? Math.abs(parseInt(gameInfo.redScore) - parseInt(gameInfo.blueScore)) : '—')}</div>
             </div>
           </div>
           {mySettlement && (
@@ -607,7 +626,7 @@ function QuizPage({ user, setUser }) {
       )}
 
       {/* 下注区域 */}
-      {(status === 'betting' || status === 'started') && !resultData && (
+      {(status === 'betting' || status === 'started') && !effectiveResult && (
         <div className="mq-betting-section">
           {/* 胜负竞猜 */}
           <div className="mq-bet-card">

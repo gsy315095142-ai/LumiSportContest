@@ -1,4 +1,4 @@
-import { useState, useEffect, Component } from 'react';
+import { useState, useEffect, useLayoutEffect, Component } from 'react';
 import Login from './Login';
 import QuizPage from './QuizPage';
 import JoinPage from './JoinPage';
@@ -46,7 +46,8 @@ function MobileAppInner() {
   const [activeTab, setActiveTab] = useState('quiz'); // quiz | join
   const [danmakuOpen, setDanmakuOpen] = useState(false);
 
-  useEffect(() => {
+  /** 首帧前打上类名，避免 index.css 里 body 的 flex 居中在首屏把 #root 顶离底部 */
+  useLayoutEffect(() => {
     const root = document.documentElement;
     const body = document.body;
     root.classList.add('mobile-app-route');

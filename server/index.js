@@ -162,11 +162,24 @@ function createFreshGame() {
     bets: {},
     round: 1,
     isMasterMode: true,      // 是否大师模式；冰球非大师模式时不显示/结算元素之王
+    /** 锁定下注瞬间的胜负赔率快照；赛后积分变化时仍展示赛前赔率 */
+    lockedOdds: null,
+    /** 本局最近一次开奖 payload（与 game:result 一致），供 HTTP / 重进页恢复展示 */
+    lastSettleResult: null,
   };
 }
 
+/** 比赛开始（锁定下注）时调用，固定本局用于展示与结算的胜负赔率 */
+function lockOddsForCurrentMatch() {
+  gameState.lockedOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+}
+
 function buildGameInfo() {
-  const odds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  const liveOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  const odds =
+    (gameState.status === 'started' || gameState.status === 'settled') && gameState.lockedOdds
+      ? gameState.lockedOdds
+      : liveOdds;
   const redRating = gameState.redPlayer ? getUserRating(gameState.redPlayer) : null;
   const blueRating = gameState.bluePlayer ? getUserRating(gameState.bluePlayer) : null;
   const info = {
@@ -195,6 +208,9 @@ function buildGameInfo() {
     if (gameState.status === 'settled') {
       info.elementWinner = gameState.elementWinner ?? null;
       info.totalKnockdowns = gameState.totalKnockdowns;
+      if (gameState.lastSettleResult) {
+        info.lastGameResult = gameState.lastSettleResult;
+      }
     }
   }
   // waiting 或 betting 时展示上一局结果（比赛结束后、下一局开始前/中）
@@ -776,6 +792,7 @@ io.on('connection', (socket) => {
   // PC 端：比赛开始（锁定下注）
   socket.on('game:start', () => {
     if (gameState.status !== 'betting') return;
+    lockOddsForCurrentMatch();
     gameState.status = 'started';
     io.emit('game:start', buildGameInfo());
     io.emit('game:update', buildGameInfo());
@@ -832,9 +849,12 @@ io.on('connection', (socket) => {
     gameState.windBalls = wind;
     gameState.totalKnockdowns = knockdowns;
     gameState.elementWinner = elementWinner;
+    if (!gameState.lockedOdds) {
+      lockOddsForCurrentMatch();
+    }
     gameState.status = 'settled';
 
-    const odds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+    const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
     const totalScore = rs + bs;
     const scoreDiff = Math.abs(rs - bs);
     let winSide = null;
@@ -989,6 +1009,7 @@ io.on('connection', (socket) => {
       settlements,
     };
 
+    gameState.lastSettleResult = resultData;
     io.emit('game:result', resultData);
     io.emit('game:update', buildGameInfo());
     io.emit('rank:update', buildRankings());
@@ -1015,6 +1036,7 @@ io.on('connection', (socket) => {
         redScore: isNaN(rs) ? '' : rs,
         blueScore: isNaN(bs) ? '' : bs,
         result: !isNaN(rs) && !isNaN(bs) ? (rs > bs ? '红方胜' : rs < bs ? '蓝方胜' : '平局') : '',
+        odds: gameState.lockedOdds ? { ...gameState.lockedOdds } : null,
       };
     }
     const nextRound = gameState.round + 1;
@@ -1224,6 +1246,7 @@ app.post('/api/admin/configure', (req, res) => {
       redScore: isNaN(rs) ? '' : rs,
       blueScore: isNaN(bs) ? '' : bs,
       result: !isNaN(rs) && !isNaN(bs) ? (rs > bs ? '红方胜' : rs < bs ? '蓝方胜' : '平局') : '',
+      odds: gameState.lockedOdds ? { ...gameState.lockedOdds } : null,
     };
   }
 
@@ -1254,6 +1277,7 @@ app.post('/api/admin/lock', (req, res) => {
     return res.status(400).json({ error: `当前状态 ${gameState.status} 无法锁定` });
   }
 
+  lockOddsForCurrentMatch();
   gameState.status = 'started';
   io.emit('game:start', buildGameInfo());
   io.emit('game:update', buildGameInfo());
@@ -1314,9 +1338,12 @@ app.post('/api/admin/settle', (req, res) => {
   gameState.windBalls = wind;
   gameState.totalKnockdowns = knockdowns;
   gameState.elementWinner = elementWinner;
+  if (!gameState.lockedOdds) {
+    lockOddsForCurrentMatch();
+  }
   gameState.status = 'settled';
 
-  const odds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
   const totalScore = rs + bs;
   const scoreDiff = Math.abs(rs - bs);
   let winSide = null;
@@ -1463,6 +1490,7 @@ app.post('/api/admin/settle', (req, res) => {
     settlements,
   };
 
+  gameState.lastSettleResult = resultData;
   io.emit('game:result', resultData);
   io.emit('game:update', buildGameInfo());
   io.emit('rank:update', buildRankings());
@@ -1486,6 +1514,7 @@ app.post('/api/admin/reset', (req, res) => {
       redScore: isNaN(rs) ? '' : rs,
       blueScore: isNaN(bs) ? '' : bs,
       result: !isNaN(rs) && !isNaN(bs) ? (rs > bs ? '红方胜' : rs < bs ? '蓝方胜' : '平局') : '',
+      odds: gameState.lockedOdds ? { ...gameState.lockedOdds } : null,
     };
   }
   const nextRound = gameState.round + 1;

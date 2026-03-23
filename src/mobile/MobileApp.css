@@ -3,21 +3,25 @@
 
 html.mobile-app-route {
   /* iOS：避免 100vh 与可视区域不一致导致底部出现「空出一条」 */
+  height: 100%;
   min-height: 100%;
   min-height: -webkit-fill-available;
 }
 
 html.mobile-app-route,
 html.mobile-app-route body {
-  height: 100%;
   margin: 0;
 }
 
-body.mobile-app-route {
+html.mobile-app-route body {
+  /* 覆盖 index.css 的 body { display:flex; place-items:center }，否则 #root 垂直居中，底栏像「悬在上方」 */
   display: block;
   place-items: unset;
   align-items: unset;
+  justify-content: unset;
   min-height: 100%;
+  min-height: 100dvh;
+  height: 100%;
   overflow-x: hidden;
 }
 
@@ -39,8 +43,8 @@ body.mobile-app-route #root {
 .mobile-tab-content {
   flex: 1;
   overflow-y: auto;
-  /* 与底栏实际高度大致对齐（底栏已收紧 padding） */
-  padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+  /* 与底栏高度 + 安全区对齐（底栏仅 env(safe-area)，无额外 6px） */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ========== 底部导航（固定底部，滚动时始终可见） ========== */
@@ -53,8 +57,8 @@ body.mobile-app-route #root {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  /* 仅保留安全区与最小触控留白，避免 8px+safe 叠出「栏整体上移」观感 */
-  padding: 6px 0 max(env(safe-area-inset-bottom, 0px), 6px);
+  /* 底部仅留安全区（刘海屏 Home 条），无 max(…,6px) 以免无刘海设备多出一条空隙 */
+  padding: 6px 0 env(safe-area-inset-bottom, 0px);
   /* 锚定在布局视口底部；配合 interactive-widget=overlays-content，键盘覆盖内容而非整体上推底栏 */
   display: flex;
   justify-content: space-around;
