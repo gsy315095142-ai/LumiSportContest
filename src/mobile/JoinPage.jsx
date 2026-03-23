@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMobileSocket } from './SocketContext.jsx';
 
 const GAME_TYPE_NAMES = { hockey: '魔法冰球', boxing: '魔法拳王' };
@@ -13,6 +13,16 @@ function JoinPage({ user, setUser }) {
   const [matchHistoryData, setMatchHistoryData] = useState([]);
   const [matchHistoryLoading, setMatchHistoryLoading] = useState(false);
   const [ratingRankings, setRatingRankings] = useState([]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/user/${user.name}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) setUser(data.user);
+      }
+    } catch {}
+  }, [user.name, setUser]);
 
   useEffect(() => {
     if (!socket) return;
@@ -35,6 +45,11 @@ function JoinPage({ user, setUser }) {
       }
     };
 
+    /** 与竞猜页一致：结算后服务端已更新 rating，需拉取用户对象才能刷新左上角积分 */
+    const onGameResult = () => {
+      refreshUser();
+    };
+
     const onContestUpdate = (status) => {
       setContestStatus(status);
     };
@@ -46,6 +61,7 @@ function JoinPage({ user, setUser }) {
 
     socket.on('connect', onConnect);
     socket.on('game:update', onGameUpdate);
+    socket.on('game:result', onGameResult);
     socket.on('contest:update', onContestUpdate);
     socket.on('contest:error', onContestError);
 
@@ -56,10 +72,11 @@ function JoinPage({ user, setUser }) {
     return () => {
       socket.off('connect', onConnect);
       socket.off('game:update', onGameUpdate);
+      socket.off('game:result', onGameResult);
       socket.off('contest:update', onContestUpdate);
       socket.off('contest:error', onContestError);
     };
-  }, [socket, user.name]);
+  }, [socket, user.name, refreshUser]);
 
   // 初始加载：从 REST 获取当前状态
   useEffect(() => {

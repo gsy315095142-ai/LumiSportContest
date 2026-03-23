@@ -146,6 +146,12 @@ function getQuizTier(totalWinnings) {
 let gameState = createFreshGame();
 let lastSettledMatch = null;  // 上一局结果，用于 waiting 时展示
 
+/** 未填写赛事名称时用语义化默认名（按局数），避免客户端仍显示上一局名称或留空 */
+function ensureDefaultMatchName() {
+  if (String(gameState.matchName || '').trim()) return;
+  gameState.matchName = `第${gameState.round}局`;
+}
+
 function createFreshGame() {
   return {
     status: 'waiting',       // waiting | betting | started | settled
@@ -781,10 +787,7 @@ io.on('connection', (socket) => {
   // PC 端：开始竞猜（从 waiting 进入 betting，允许手机端下注）
   socket.on('game:openBetting', () => {
     if (gameState.status !== 'waiting') return;
-    if (!gameState.matchName.trim()) {
-      socket.emit('game:error', { message: '请先填写赛事名称' });
-      return;
-    }
+    ensureDefaultMatchName();
     gameState.status = 'betting';
     io.emit('game:update', buildGameInfo());
   });
@@ -1259,6 +1262,7 @@ app.post('/api/admin/configure', (req, res) => {
   if (gameType && (gameType === 'hockey' || gameType === 'boxing')) gameState.gameType = gameType;
   if (isMasterMode !== undefined) gameState.isMasterMode = !!isMasterMode;
 
+  ensureDefaultMatchName();
   gameState.status = 'betting';
 
   io.emit('game:update', buildGameInfo());

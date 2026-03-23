@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, Component } from 'react';
+import { useState, useLayoutEffect, useRef, Component } from 'react';
 import Login from './Login';
 import QuizPage from './QuizPage';
 import JoinPage from './JoinPage';
@@ -45,6 +45,8 @@ function MobileAppInner() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('quiz'); // quiz | join
   const [danmakuOpen, setDanmakuOpen] = useState(false);
+  const bottomNavRef = useRef(null);
+  const stableLayoutHeightRef = useRef(window.innerHeight);
 
   /** 首帧前打上类名，避免 index.css 里 body 的 flex 居中在首屏把 #root 顶离底部 */
   useLayoutEffect(() => {
@@ -57,6 +59,69 @@ function MobileAppInner() {
       body.classList.remove('mobile-app-route');
     };
   }, []);
+
+  /**
+   * 键盘 / 视口变化时，部分 WebView 会缩小布局视口，fixed bottom:0 会锚在「可见区底」导致底栏被顶起。
+   * 用 visualViewport 与 innerHeight 差值（及无 vv 时的回退）计算应向下平移的距离，使底栏贴回物理屏幕底缘（可被键盘盖住）。
+   */
+  useLayoutEffect(() => {
+    if (!user) return;
+    const nav = bottomNavRef.current;
+    if (!nav) return;
+
+    stableLayoutHeightRef.current = window.innerHeight;
+
+    const computeInsetBottom = () => {
+      const vv = window.visualViewport;
+      if (vv) {
+        const fromVv = window.innerHeight - vv.height - vv.offsetTop;
+        if (fromVv > 0.5) return fromVv;
+      }
+      return Math.max(0, stableLayoutHeightRef.current - window.innerHeight);
+    };
+
+    const apply = () => {
+      const inset = computeInsetBottom();
+      nav.style.transform = inset > 0.5 ? `translateY(${inset}px)` : '';
+    };
+
+    const onWinResize = () => apply();
+
+    const onOrientation = () => {
+      window.setTimeout(() => {
+        stableLayoutHeightRef.current = window.innerHeight;
+        apply();
+      }, 350);
+    };
+
+    const onFocusIn = (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      if (!t.matches('input, textarea, select')) return;
+      requestAnimationFrame(() => requestAnimationFrame(apply));
+    };
+
+    window.addEventListener('resize', onWinResize);
+    window.addEventListener('orientationchange', onOrientation);
+    document.addEventListener('focusin', onFocusIn, true);
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', apply);
+      vv.addEventListener('scroll', apply);
+    }
+    apply();
+
+    return () => {
+      window.removeEventListener('resize', onWinResize);
+      window.removeEventListener('orientationchange', onOrientation);
+      document.removeEventListener('focusin', onFocusIn, true);
+      if (vv) {
+        vv.removeEventListener('resize', apply);
+        vv.removeEventListener('scroll', apply);
+      }
+      nav.style.transform = '';
+    };
+  }, [user]);
 
   if (!user) {
     return <Login onLogin={setUser} />;
@@ -73,7 +138,7 @@ function MobileAppInner() {
             <JoinPage user={user} setUser={setUser} />
           )}
         </main>
-        <nav className="mobile-bottom-nav mobile-bottom-nav-3col">
+        <nav ref={bottomNavRef} className="mobile-bottom-nav mobile-bottom-nav-3col">
           <button
             type="button"
             className={`mobile-nav-btn ${activeTab === 'quiz' ? 'active' : ''}`}

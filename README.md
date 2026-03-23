@@ -1,16 +1,23 @@
-# React + Vite
+# LumiSportContest（竞技大空间竞猜系统）
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite 前端，Node.js（Express + Socket.IO）后端。开发时可分别启动前后端，或使用仓库根目录 `start.bat`。
 
-Currently, two official plugins are available:
+## 文档
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**[→ 进入 `doc/` 文档目录与索引](./doc/README.md)**
 
-## React Compiler
+需求、实施进展、操作指南、技术备忘等均在 `doc/` 下。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 本地开发（脚手架说明）
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+基于 [Vite](https://vite.dev/) 的 React 模板，支持 HMR 与 ESLint。官方插件说明见 [plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) / [plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc)。
+
+### React Compiler
+
+默认未启用；若需启用见 [React Compiler 安装说明](https://react.dev/learn/react-compiler/installation)。
+
+### ESLint 与 TypeScript
+
+若在生产环境开发，建议配合 TypeScript 与 [`typescript-eslint`](https://typescript-eslint.io)；可参考 [Vite TS 模板](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts)。
