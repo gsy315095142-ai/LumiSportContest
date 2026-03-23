@@ -157,3 +157,139 @@
 | Unity 轮询 | ⏳ 需在 LumiSports 工程内接入 `poll` |
 
 屏蔽词列表见服务端常量 `DANMAKU_BLOCKED_WORDS`，可按现场要求增删。
+
+---
+
+## 十、Unity 端接入指南（LumiSports / 大屏开发必读）
+
+本节面向 **Unity 工程**同学，说明如何在不引入 Socket.IO 客户端的前提下，用 **HTTP 短轮询** 接入弹幕，与现有竞猜联动方式（`ContestApiUrl` + `UnityWebRequest`）保持一致。
+
+### 10.1 职责划分
+
+| 端 | 职责 |
+|----|------|
+| **手机 H5** | 用户登录后发送弹幕：`POST /api/danmaku/send`；并通过 Socket 收 `danmaku:message` 自播飘字。 |
+| **Unity 大屏** | **仅拉取展示**：定时请求 `GET /api/danmaku/poll`，解析 `items` 后在大屏做横向飘字；**不需要**在 Unity 里实现「发弹幕」（除非产品单独要求）。 |
+| **Node（LumiSportContest）** | 统一入队、序号、屏蔽字、频控；场次切换时重置队列；与竞猜 **共用同一进程与端口**（默认 `3001`）。 |
+
+### 10.2 配置从哪里来
+
+与竞猜、开赛场次相同，使用 Unity 侧已有的 **`ServerConfig.txt`（或等价配置）**：
+
+- **`ContestApiUrl`**：竞猜 Node 服务根地址，例如 `http://<局域网IP>:3001`。  
+- 弹幕接口即：`{ContestApiUrl}/api/danmaku/...`（**无**单独「弹幕服务器」）。
+
+详见《后续操作指南》中 **ContestApiUrl / ContestPageUrl / ContestAdminToken** 说明；**弹幕轮询只依赖 `ContestApiUrl` 可达**，与 `ContestAdminToken` 无直接关系（`poll` / `send` 均为公开 HTTP，安全边界为局域网 + 服务端屏蔽字/频控）。
+
+### 10.3 接口：`GET /api/danmaku/poll`（Unity 唯一必接）
+
+**用途**：按序号 **增量**拉取本场次内、手机端已发送的弹幕，用于大屏播放。
+
+**请求**
+
+- **方法**：`GET`
+- **完整路径**：`{ContestApiUrl}/api/danmaku/poll`
+- **Query 参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `since` | 整数 | **是** | 客户端已消费的 **最大 `seq`**；从未拉过则传 **`0`**。下一轮请求传 **上一轮处理完后**应使用的游标（见 10.5）。 |
+| `sessionId` | 字符串 | 建议 | **上一次响应 JSON 里的 `sessionId` 原样回传**（注意 URL 编码）。**首次请求**可传空字符串，或不传该参数。 |
+
+**服务端行为摘要**
+
+- 场次标识 `sessionId` 由服务端根据当前 **`matchName` + `round`** 生成（形如 `某赛事名|3`）。**新一局、或赛事名变化**会导致 `sessionId` 变化，弹幕队列与序号会重置。
+- 若客户端持有的 `sessionId` 与当前不一致 → 返回 **当前缓冲区内全部** `items`，且 **`truncated: true`**（需按全量同步处理游标）。
+- 若客户端 **`since` 大于** 服务端当前 `latestSeq`**（例如换局后序号从 0 再起，仍带着上一局的 `since=50`）→ 同样返回全量 `items`，**`truncated: true`**。
+
+**响应 JSON 示例**
+
+```json
+{
+  "sessionId": "第2局|2",
+  "latestSeq": 3,
+  "truncated": false,
+  "items": [
+    {
+      "seq": 1,
+      "ts": "2026-03-20T08:30:00.000Z",
+      "username": "观众A",
+      "text": "红方加油"
+    }
+  ]
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `sessionId` | 当前场次 ID；下次请求 **原样带回**（URL 编码）。 |
+| `latestSeq` | 当前服务端已分配的最大序号。 |
+| `truncated` | `true` 表示发生了 **全量重同步**（场次切换或游标过期），`items` 可能含缓冲内多条或全部。 |
+| `items` | 本响应应处理的弹幕列表；每条必须展示 **`username` + `text`**（与手机端一致）。 |
+
+**实现常量（与代码一致，便于联调对齐）**
+
+- 环形缓冲最多约 **500** 条；单条文案长度 **1～40** 字（手机端限制，Unity 仅展示）。
+- 手机端 **5 秒 1 条** 频控；大屏轮询间隔建议 **300ms～500ms** 即可，避免过高 QPS。
+
+### 10.4 推荐状态变量（Unity 侧）
+
+建议在负责弹幕的 MonoBehaviour / 管理器中 **持久维护**（游戏运行期间即可，无需写 PlayerPrefs，除非要做断线恢复）：
+
+- `long since`：初始 **`0`**；每次 **成功处理完** `items` 后，置为响应中的 **`latestSeq`**（或与已展示的最大 `seq` 对齐，二者在顺序消费前提下应一致）。
+- `string sessionId`：初始 **`""`**；每次收到响应后更新为 **`json.sessionId`**。
+- 下一次请求的 Query：`since={since}&sessionId={Uri.EscapeDataString(sessionId)}`
+
+若 **`truncated == true`**：仍按顺序播放 `items` 中每条，最后将 **`since = latestSeq`**，**`sessionId` 用响应中的新值**，避免漏条与重复。
+
+### 10.5 轮询流程（逻辑伪代码）
+
+```
+since = 0
+sessionId = ""
+
+每隔约 0.35 秒：
+  GET {ContestApiUrl}/api/danmaku/poll?since={since}&sessionId={UrlEncode(sessionId)}
+  若 HTTP 非 2xx：记录日志，下次再试（可适当退避）
+  解析 JSON
+  sessionId = json.sessionId
+  对 json.items 中每条按 seq 顺序加入「待播队列」（大屏飘字）
+  若 json.items 非空 或 需要对齐游标：
+      since = json.latestSeq
+```
+
+**注意**：不要仅凭「`items` 为空」就推进 `since`，应以响应体中的 **`latestSeq`** 为准更新游标，避免与服务端序号脱节（具体以你方队列实现为准；若采用「只增量追加」模型，处理完本批 `items` 后将 `since` 设为 `latestSeq` 即可）。
+
+### 10.6 与竞猜「局」的关系（无需额外接口）
+
+- **换局**（PC/Unity 管理端进入下一局、或 Admin `configure` 等导致 **`round` 或 `matchName` 变化**）后，服务端会切换弹幕 `sessionId` 并清空队列。
+- Unity **无需**为弹幕单独调用 Admin 接口；只要持续轮询 `poll` 并正确处理 `sessionId` / `truncated` / `since` 即可。
+
+### 10.7 联调步骤建议
+
+1. 启动 LumiSportContest（`start.bat` 或前后端分别启动），确认 **`ContestApiUrl`** 与运行机 **同网段** 可访问。  
+2. 浏览器或 Postman 访问：  
+   `GET http://<IP>:3001/api/danmaku/poll?since=0`  
+   应返回 JSON，`items` 可为 `[]`。  
+3. 手机进入 `/mobile` 登录后发一条弹幕。  
+4. 再次请求 `poll`，`items` 中应出现对应 `username`、`text`。  
+5. Unity 集成后，观察 **新局开始** 后 `sessionId` 变化、`truncated` 是否为 `true`、大屏是否不卡死、不重复播旧局弹幕。
+
+### 10.8 与 Socket 的关系（Unity 不需要接）
+
+- 手机端使用 **`danmaku:message`** 仅为 **低延迟自播**；Unity **不必**接入 Socket.IO。  
+- 大屏以 **`poll` 为唯一数据源** 即可与手机内容 ** eventual 一致**（间隔 300～500ms 内可见）。
+
+### 10.9 可选：如需在 Unity 侧排查原始流量
+
+可用 curl 模拟（Windows / Mac 均可）：
+
+```bash
+curl "http://127.0.0.1:3001/api/danmaku/poll?since=0"
+```
+
+将 `127.0.0.1` 换为实际 `ContestApiUrl` 主机。
+
+---
+
+*Unity 同学若对 `sessionId` / `since` 对齐有疑问，可对照 LumiSportContest 仓库 `server/index.js` 中 `ensureDanmakuSession`、`GET /api/danmaku/poll` 实现。*
