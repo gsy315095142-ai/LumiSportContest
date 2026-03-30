@@ -356,20 +356,26 @@ function applyPlayerRatingAndHistory(rs, bs, winSide) {
   if (redPlayer && bluePlayer) {
     const redCurrent = getUserRating(redPlayer, gameType);
     const blueCurrent = getUserRating(bluePlayer, gameType);
+    const redWinRate = getExpectedWinRate(redCurrent, blueCurrent);
+    const blueWinRate = getExpectedWinRate(blueCurrent, redCurrent);
     redRatingBefore = redCurrent;
     blueRatingBefore = blueCurrent;
 
     if (winSide === 'red') {
-      const newRed = sanitizeRating(redCurrent * (1 + SCORE_RATE * (blueCurrent / redCurrent)), redCurrent);
-      const newBlue = sanitizeRating(blueCurrent / (1 + SCORE_RATE * (blueCurrent / redCurrent)), blueCurrent);
+      // 红方赢：红方用“对手胜率/自己胜率”，蓝方输用“自己胜率/对手胜率”（两者在该场景下数值一致）
+      const ratio = blueWinRate / redWinRate;
+      const newRed = sanitizeRating(redCurrent * (1 + SCORE_RATE * ratio), redCurrent);
+      const newBlue = sanitizeRating(blueCurrent / (1 + SCORE_RATE * ratio), blueCurrent);
       redRatingAfter = Math.max(MIN_RATING, round2(newRed));
       blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
       redRatingChange = round2(redRatingAfter - redCurrent);
       blueRatingChange = round2(blueRatingAfter - blueCurrent);
       result = '红方胜';
     } else if (winSide === 'blue') {
-      const newRed = sanitizeRating(redCurrent / (1 + SCORE_RATE * (redCurrent / blueCurrent)), redCurrent);
-      const newBlue = sanitizeRating(blueCurrent * (1 + SCORE_RATE * (redCurrent / blueCurrent)), blueCurrent);
+      // 蓝方赢：蓝方用“对手胜率/自己胜率”，红方输用“自己胜率/对手胜率”（两者在该场景下数值一致）
+      const ratio = redWinRate / blueWinRate;
+      const newRed = sanitizeRating(redCurrent / (1 + SCORE_RATE * ratio), redCurrent);
+      const newBlue = sanitizeRating(blueCurrent * (1 + SCORE_RATE * ratio), blueCurrent);
       redRatingAfter = Math.max(MIN_RATING, round2(newRed));
       blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
       redRatingChange = round2(redRatingAfter - redCurrent);
