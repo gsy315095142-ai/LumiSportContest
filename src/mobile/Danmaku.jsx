@@ -196,6 +196,7 @@ export function DanmakuInputModal({ user, open, onClose }) {
   const maxLen = 40;
   /** 本页最近一次发送成功时间，用于本地与后端一致的频控提示 */
   const lastSendOkAtRef = useRef(0);
+  const normalizeSingleLine = useCallback((value) => value.replace(/[\r\n]+/g, ' '), []);
 
   const appendEmoji = useCallback((emoji) => {
     setText((prev) => {
@@ -206,7 +207,7 @@ export function DanmakuInputModal({ user, open, onClose }) {
   }, []);
 
   const submit = useCallback(async () => {
-    const raw = text.trim();
+    const raw = normalizeSingleLine(text).trim();
     if (!raw.length) {
       setErr('请输入弹幕内容');
       return;
@@ -241,7 +242,7 @@ export function DanmakuInputModal({ user, open, onClose }) {
     } finally {
       setSending(false);
     }
-  }, [text, user.name, onClose, maxLen]);
+  }, [text, user.name, onClose, maxLen, normalizeSingleLine]);
 
   useEffect(() => {
     if (!open) {
@@ -261,9 +262,14 @@ export function DanmakuInputModal({ user, open, onClose }) {
           className="mq-danmaku-input"
           rows={3}
           maxLength={maxLen}
-          placeholder="文字或表情均可（系统键盘也可输入表情）"
+          placeholder="请输入弹幕内容"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(normalizeSingleLine(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+            }
+          }}
         />
         <div className="mq-danmaku-emoji-row" role="group" aria-label="快捷表情">
           {DANMAKU_QUICK_EMOJIS.map((em) => (

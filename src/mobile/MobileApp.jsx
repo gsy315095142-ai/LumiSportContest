@@ -72,12 +72,19 @@ function MobileAppInner() {
     stableLayoutHeightRef.current = window.innerHeight;
 
     const computeInsetBottom = () => {
+      const stableLayoutHeight = stableLayoutHeightRef.current || window.innerHeight;
       const vv = window.visualViewport;
       if (vv) {
-        const fromVv = window.innerHeight - vv.height - vv.offsetTop;
-        if (fromVv > 0.5) return fromVv;
+        /**
+         * 某些 WebView 在键盘弹出时会同步缩小 innerHeight，导致 innerHeight - vv.height 约等于 0。
+         * 用“稳定布局高度”作为主基线，能更稳地得到应下移的像素，避免底栏被顶起。
+         */
+        const fromStableLayout = stableLayoutHeight - vv.height - vv.offsetTop;
+        if (fromStableLayout > 0.5) return fromStableLayout;
+        const fromInnerHeight = window.innerHeight - vv.height - vv.offsetTop;
+        if (fromInnerHeight > 0.5) return fromInnerHeight;
       }
-      return Math.max(0, stableLayoutHeightRef.current - window.innerHeight);
+      return Math.max(0, stableLayoutHeight - window.innerHeight);
     };
 
     const apply = () => {
