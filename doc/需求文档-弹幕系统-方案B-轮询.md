@@ -156,7 +156,7 @@
 | 上半屏飘字 + 半透明条 + `pointer-events: none` | ✅ `Danmaku.jsx` + `MobileApp.css` |
 | Unity 轮询 | ⏳ 需在 LumiSports 工程内接入 `poll` |
 
-屏蔽词列表见服务端常量 `DANMAKU_BLOCKED_WORDS`，可按现场要求增删。
+屏蔽词列表见 `server/data/danmakuBlockedWords.txt`（每行一个词，可按现场要求增删）。
 
 ---
 

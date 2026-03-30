@@ -1,0 +1,52 @@
+# 弹幕敏感词词库（每行一个词）
+# 说明：
+# 1) 以 # 开头的行为注释，不参与匹配
+# 2) 中文按原文 includes 匹配；英文按不区分大小写 includes 匹配
+# 3) 命中任一词即拒绝发送
+
+# 现有兜底词
+傻逼
+nmsl
+fuck
+shit
+
+# 常见中文辱骂/侮辱词（示例，可继续扩充）
+煞笔
+沙雕
+脑残
+智障
+白痴
+蠢货
+废物
+狗东西
+王八蛋
+滚蛋
+去死
+死全家
+妈的
+他妈的
+你妈的
+操你妈
+草泥马
+cnm
+sb
+tmd
+
+# 英文常见辱骂词（示例，可继续扩充）
+bitch
+bastard
+asshole
+motherfucker
+fucker
+wtf
+stfu
+retard
+idiot
+moron
+dumbass
+cunt
+nigger
+faggot
+slut
+whore
+

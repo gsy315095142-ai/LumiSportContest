@@ -589,8 +589,10 @@ const DANMAKU_MAX_LEN = 40;
 const DANMAKU_RING_MAX = 500;
 /** 同一账号两次发送的最小间隔 */
 const DANMAKU_INTERVAL_MS = 5000;
-/** 命中则拒绝发送；可在服务端随时增删 */
-const DANMAKU_BLOCKED_WORDS = ['傻逼', 'nmsl', 'fuck', 'shit'];
+/** 敏感词文件（每行一个词；支持 # 注释行） */
+const DANMAKU_BLOCKED_WORDS_FILE = path.join(DATA_DIR, 'danmakuBlockedWords.txt');
+/** 文件缺失/读取失败时的最小兜底词库 */
+const DANMAKU_BLOCKED_WORDS_FALLBACK = ['傻逼', 'nmsl', 'fuck', 'shit'];
 
 let danmakuSeq = 0;
 const danmakuRing = [];
@@ -599,6 +601,60 @@ const danmakuLastSendMs = {};
 /** 超过该时间未再发弹幕则视为不活跃，从频控表中删除（避免长时间运行只增不减） */
 const DANMAKU_LAST_SEND_STALE_MS = 60 * 60 * 1000;
 const DANMAKU_LAST_SEND_PRUNE_INTERVAL_MS = 15 * 60 * 1000;
+
+function normalizeBlockedWordLine(line) {
+  return String(line || '').trim();
+}
+
+function parseDanmakuBlockedWordsText(text) {
+  const set = new Set();
+  const lines = String(text || '').split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = normalizeBlockedWordLine(rawLine);
+    if (!line || line.startsWith('#')) continue;
+    set.add(line);
+  }
+  return Array.from(set);
+}
+
+function buildDanmakuBlockedWordsTemplate() {
+  return [
+    '# 弹幕敏感词词库（每行一个词）',
+    '# 说明：',
+    '# 1) 以 # 开头的行会被忽略',
+    '# 2) 修改后重启服务即可生效',
+    ...DANMAKU_BLOCKED_WORDS_FALLBACK,
+    '',
+  ].join('\n');
+}
+
+function ensureDanmakuBlockedWordsFile() {
+  if (fs.existsSync(DANMAKU_BLOCKED_WORDS_FILE)) return;
+  try {
+    fs.writeFileSync(DANMAKU_BLOCKED_WORDS_FILE, buildDanmakuBlockedWordsTemplate(), 'utf-8');
+    console.log('[danmaku] created blocked words file:', DANMAKU_BLOCKED_WORDS_FILE);
+  } catch (e) {
+    console.error('[danmaku] failed to create blocked words file:', e.message);
+  }
+}
+
+function loadDanmakuBlockedWords() {
+  ensureDanmakuBlockedWordsFile();
+  try {
+    const text = fs.readFileSync(DANMAKU_BLOCKED_WORDS_FILE, 'utf-8');
+    const words = parseDanmakuBlockedWordsText(text);
+    if (words.length > 0) {
+      console.log(`[danmaku] loaded blocked words: ${words.length}`);
+      return words;
+    }
+    console.warn('[danmaku] blocked words file is empty, fallback to defaults');
+  } catch (e) {
+    console.error('[danmaku] failed to load blocked words file:', e.message);
+  }
+  return DANMAKU_BLOCKED_WORDS_FALLBACK.slice();
+}
+
+let danmakuBlockedWords = loadDanmakuBlockedWords();
 
 function pruneDanmakuLastSendMs() {
   const cutoff = Date.now() - DANMAKU_LAST_SEND_STALE_MS;
@@ -628,7 +684,7 @@ function ensureDanmakuSession() {
 function danmakuContainsBlocked(text) {
   const t = String(text);
   const lower = t.toLowerCase();
-  for (const w of DANMAKU_BLOCKED_WORDS) {
+  for (const w of danmakuBlockedWords) {
     if (!w) continue;
     if (/[^\x00-\x7f]/.test(w)) {
       if (t.includes(w)) return true;
