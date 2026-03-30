@@ -622,7 +622,7 @@ function buildDanmakuBlockedWordsTemplate() {
     '# 弹幕敏感词词库（每行一个词）',
     '# 说明：',
     '# 1) 以 # 开头的行会被忽略',
-    '# 2) 修改后重启服务即可生效',
+    '# 2) 修改后调用 /api/danmaku/reload-words 或重启服务即可生效',
     ...DANMAKU_BLOCKED_WORDS_FALLBACK,
     '',
   ].join('\n');
@@ -645,16 +645,26 @@ function loadDanmakuBlockedWords() {
     const words = parseDanmakuBlockedWordsText(text);
     if (words.length > 0) {
       console.log(`[danmaku] loaded blocked words: ${words.length}`);
-      return words;
+      return { words, source: 'file', reason: null };
     }
     console.warn('[danmaku] blocked words file is empty, fallback to defaults');
+    return {
+      words: DANMAKU_BLOCKED_WORDS_FALLBACK.slice(),
+      source: 'fallback',
+      reason: 'blocked words file is empty',
+    };
   } catch (e) {
     console.error('[danmaku] failed to load blocked words file:', e.message);
+    return {
+      words: DANMAKU_BLOCKED_WORDS_FALLBACK.slice(),
+      source: 'fallback',
+      reason: `failed to load file: ${e.message}`,
+    };
   }
-  return DANMAKU_BLOCKED_WORDS_FALLBACK.slice();
 }
 
-let danmakuBlockedWords = loadDanmakuBlockedWords();
+const initialDanmakuWords = loadDanmakuBlockedWords();
+let danmakuBlockedWords = initialDanmakuWords.words;
 
 function pruneDanmakuLastSendMs() {
   const cutoff = Date.now() - DANMAKU_LAST_SEND_STALE_MS;
@@ -724,6 +734,20 @@ app.post('/api/danmaku/send', (req, res) => {
   while (danmakuRing.length > DANMAKU_RING_MAX) danmakuRing.shift();
   io.emit('danmaku:message', item);
   res.json({ ok: true, seq: item.seq, ts: item.ts });
+});
+
+app.post('/api/danmaku/reload-words', (_req, res) => {
+  const previousCount = danmakuBlockedWords.length;
+  const loaded = loadDanmakuBlockedWords();
+  danmakuBlockedWords = loaded.words;
+  res.json({
+    ok: true,
+    source: loaded.source,
+    reason: loaded.reason,
+    previousCount,
+    currentCount: danmakuBlockedWords.length,
+    file: DANMAKU_BLOCKED_WORDS_FILE,
+  });
 });
 
 app.get('/api/danmaku/poll', (req, res) => {
