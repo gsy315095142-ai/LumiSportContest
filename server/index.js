@@ -45,38 +45,94 @@ function saveUsers(users) {
 
 let users = loadUsers();
 
-// ========== 选手积分与赔率（段位已移除，统一按积分） ==========
+// ========== 选手积分与赔率（按玩法独立积分） ==========
 
-const DEFAULT_RATING = 1500;
-const MIN_RATING = 600;  // 积分保底，不再往下扣
+const DEFAULT_RATING = 100;
+const MIN_RATING = 1;
+const ODDS_FEE_RATE = 0.10;
+const SCORE_RATE = 0.05;
+const WIN_BET_BLOCK_WIN_RATE = 0.90;
+const GAME_TYPES = ['hockey', 'boxing'];
 
-// 启动时迁移：为老用户补全 rating，并保底不低于 MIN_RATING
+function round2(x) {
+  return Math.round(Number(x) * 100) / 100;
+}
+
+function normalizeGameType(gameType) {
+  return GAME_TYPES.includes(gameType) ? gameType : 'hockey';
+}
+
+function sanitizeRating(value, fallback = DEFAULT_RATING) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(MIN_RATING, round2(num));
+}
+
+function ensureUserRatings(user) {
+  let changed = false;
+  if (!user.ratings || typeof user.ratings !== 'object') {
+    user.ratings = {};
+    changed = true;
+  }
+  for (const gameType of GAME_TYPES) {
+    const raw = user.ratings[gameType] ?? user.rating ?? DEFAULT_RATING;
+    const normalized = sanitizeRating(raw, DEFAULT_RATING);
+    if (user.ratings[gameType] !== normalized) {
+      user.ratings[gameType] = normalized;
+      changed = true;
+    }
+  }
+  // 兼容旧字段，避免老客户端读取异常
+  if (user.rating !== user.ratings.hockey) {
+    user.rating = user.ratings.hockey;
+    changed = true;
+  }
+  return changed;
+}
+
+// 启动时迁移：为老用户补全 ratings（按玩法独立）
 let usersNeedSave = false;
 for (const u of Object.values(users)) {
-  if (u.rating === undefined || u.rating === null) {
-    u.rating = DEFAULT_RATING;
-    usersNeedSave = true;
-  } else if (u.rating < MIN_RATING) {
-    u.rating = MIN_RATING;
-    usersNeedSave = true;
-  }
+  if (ensureUserRatings(u)) usersNeedSave = true;
 }
 if (usersNeedSave) saveUsers(users);
-const ODDS_DMAX = 400;  // 积分差达到此值时赔率触及极值
 
-function getUserRating(username) {
+function getUserRating(username, gameType) {
   if (!username) return null;
   const u = users[username];
   if (!u) return null;
-  return (u.rating ?? DEFAULT_RATING);
+  ensureUserRatings(u);
+  return u.ratings[normalizeGameType(gameType)] ?? DEFAULT_RATING;
 }
 
-function ensureUserRating(user) {
-  if (user.rating === undefined || user.rating === null) {
-    user.rating = DEFAULT_RATING;
-    return true;
+function getExpectedWinRate(myRating, enemyRating) {
+  const my = sanitizeRating(myRating, DEFAULT_RATING);
+  const enemy = sanitizeRating(enemyRating, DEFAULT_RATING);
+  const total = my + enemy;
+  if (total <= 0) return 0.5;
+  return my / total;
+}
+
+function getWinBetRestriction(redPlayer, bluePlayer, gameType) {
+  const redRating = getUserRating(redPlayer, gameType);
+  const blueRating = getUserRating(bluePlayer, gameType);
+  if (redRating === null || blueRating === null) {
+    return {
+      winBetEnabled: true,
+      blockedReason: '',
+      redWinRate: null,
+      blueWinRate: null,
+    };
   }
-  return false;
+  const redWinRate = getExpectedWinRate(redRating, blueRating);
+  const blueWinRate = getExpectedWinRate(blueRating, redRating);
+  const blocked = redWinRate >= WIN_BET_BLOCK_WIN_RATE || blueWinRate >= WIN_BET_BLOCK_WIN_RATE;
+  return {
+    winBetEnabled: !blocked,
+    blockedReason: blocked ? '双方实力差距过大，本场暂不开放胜负竞猜，可参与趣味竞猜' : '',
+    redWinRate: round2(redWinRate),
+    blueWinRate: round2(blueWinRate),
+  };
 }
 
 /** 本局竞猜净盈亏（相对下注本金）：下注已在 bet:place 扣款，不能用结算前后余额差 */
@@ -88,38 +144,22 @@ function computeBetNetResult(totalWon, totalBetted, details) {
   return Math.round((totalWon + refundSum - totalBetted) * 10) / 10;
 }
 
-/** 根据红蓝选手积分计算赔率，1.1~2.0，精确到小数点后2位 */
-function getOddsByRating(redPlayer, bluePlayer) {
-  const redRating = getUserRating(redPlayer);
-  const blueRating = getUserRating(bluePlayer);
+/** 根据红蓝选手积分计算赔率，赔率 = (1 / 胜率) * (1 - 服务费) */
+function getOddsByRating(redPlayer, bluePlayer, gameType) {
+  const redRating = getUserRating(redPlayer, gameType);
+  const blueRating = getUserRating(bluePlayer, gameType);
 
-  const round2 = (x) => Math.round(x * 100) / 100;
-
-  // 双方都无选手
-  if (redRating === null && blueRating === null) {
-    return { red: 1.1, blue: 1.1 };
-  }
-  // 仅红方有选手
-  if (blueRating === null) {
-    return { red: 1.1, blue: 1.1 };
-  }
-  // 仅蓝方有选手
-  if (redRating === null) {
+  if (redRating === null || blueRating === null) {
     return { red: 1.1, blue: 1.1 };
   }
 
-  // 双方都有选手，线性映射
-  const d = Math.abs(redRating - blueRating);
-  const t = Math.min(d / ODDS_DMAX, 1);
-  if (redRating >= blueRating) {
-    return {
-      red: round2(1.5 - 0.4 * t),
-      blue: round2(1.5 + 0.5 * t),
-    };
-  }
+  const redWinRate = getExpectedWinRate(redRating, blueRating);
+  const blueWinRate = getExpectedWinRate(blueRating, redRating);
+  const redOdds = (1 / redWinRate) * (1 - ODDS_FEE_RATE);
+  const blueOdds = (1 / blueWinRate) * (1 - ODDS_FEE_RATE);
   return {
-    red: round2(1.5 + 0.5 * t),
-    blue: round2(1.5 - 0.4 * t),
+    red: round2(redOdds),
+    blue: round2(blueOdds),
   };
 }
 
@@ -177,17 +217,18 @@ function createFreshGame() {
 
 /** 比赛开始（锁定下注）时调用，固定本局用于展示与结算的胜负赔率 */
 function lockOddsForCurrentMatch() {
-  gameState.lockedOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  gameState.lockedOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
 }
 
 function buildGameInfo() {
-  const liveOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  const liveOdds = getOddsByRating(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
   const odds =
     (gameState.status === 'started' || gameState.status === 'settled') && gameState.lockedOdds
       ? gameState.lockedOdds
       : liveOdds;
-  const redRating = gameState.redPlayer ? getUserRating(gameState.redPlayer) : null;
-  const blueRating = gameState.bluePlayer ? getUserRating(gameState.bluePlayer) : null;
+  const redRating = gameState.redPlayer ? getUserRating(gameState.redPlayer, gameState.gameType) : null;
+  const blueRating = gameState.bluePlayer ? getUserRating(gameState.bluePlayer, gameState.gameType) : null;
+  const winBetRestriction = getWinBetRestriction(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
   const info = {
     status: gameState.status,
     gameType: gameState.gameType,
@@ -199,6 +240,10 @@ function buildGameInfo() {
     round: gameState.round,
     odds,
     isMasterMode: gameState.isMasterMode ?? true,
+    winBetEnabled: winBetRestriction.winBetEnabled,
+    winBetDisabledReason: winBetRestriction.blockedReason,
+    redWinRate: winBetRestriction.redWinRate,
+    blueWinRate: winBetRestriction.blueWinRate,
   };
   if (gameState.status === 'started' || gameState.status === 'settled') {
     const rs = typeof gameState.redScore === 'number' ? gameState.redScore : parseInt(gameState.redScore);
@@ -278,34 +323,56 @@ function appendMatchRecord(record) {
 function applyPlayerRatingAndHistory(rs, bs, winSide) {
   const redPlayer = gameState.redPlayer;
   const bluePlayer = gameState.bluePlayer;
-  const scoreDiff = Math.abs(rs - bs);
+  const gameType = normalizeGameType(gameState.gameType);
   let redRatingChange = 0;
   let blueRatingChange = 0;
+  let redRatingBefore = null;
+  let blueRatingBefore = null;
+  let redRatingAfter = null;
+  let blueRatingAfter = null;
   let result = '平局';
 
   if (redPlayer && bluePlayer) {
+    const redCurrent = getUserRating(redPlayer, gameType);
+    const blueCurrent = getUserRating(bluePlayer, gameType);
+    redRatingBefore = redCurrent;
+    blueRatingBefore = blueCurrent;
+
     if (winSide === 'red') {
-      redRatingChange = scoreDiff;
-      blueRatingChange = -scoreDiff;
+      const newRed = sanitizeRating(redCurrent * (1 + SCORE_RATE * (blueCurrent / redCurrent)), redCurrent);
+      const newBlue = sanitizeRating(blueCurrent / (1 + SCORE_RATE * (blueCurrent / redCurrent)), blueCurrent);
+      redRatingAfter = Math.max(MIN_RATING, round2(newRed));
+      blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
+      redRatingChange = round2(redRatingAfter - redCurrent);
+      blueRatingChange = round2(blueRatingAfter - blueCurrent);
       result = '红方胜';
     } else if (winSide === 'blue') {
-      redRatingChange = -scoreDiff;
-      blueRatingChange = scoreDiff;
+      const newRed = sanitizeRating(redCurrent / (1 + SCORE_RATE * (redCurrent / blueCurrent)), redCurrent);
+      const newBlue = sanitizeRating(blueCurrent * (1 + SCORE_RATE * (redCurrent / blueCurrent)), blueCurrent);
+      redRatingAfter = Math.max(MIN_RATING, round2(newRed));
+      blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
+      redRatingChange = round2(redRatingAfter - redCurrent);
+      blueRatingChange = round2(blueRatingAfter - blueCurrent);
       result = '蓝方胜';
+    } else {
+      redRatingAfter = redCurrent;
+      blueRatingAfter = blueCurrent;
     }
   }
 
   if (redPlayer && users[redPlayer]) {
-    const oldRed = users[redPlayer].rating ?? DEFAULT_RATING;
-    const newRed = Math.max(MIN_RATING, oldRed + redRatingChange);
-    users[redPlayer].rating = newRed;
-    redRatingChange = newRed - oldRed;
+    ensureUserRatings(users[redPlayer]);
+    if (redRatingAfter !== null) {
+      users[redPlayer].ratings[gameType] = redRatingAfter;
+      users[redPlayer].rating = users[redPlayer].ratings.hockey;
+    }
   }
   if (bluePlayer && users[bluePlayer]) {
-    const oldBlue = users[bluePlayer].rating ?? DEFAULT_RATING;
-    const newBlue = Math.max(MIN_RATING, oldBlue + blueRatingChange);
-    users[bluePlayer].rating = newBlue;
-    blueRatingChange = newBlue - oldBlue;
+    ensureUserRatings(users[bluePlayer]);
+    if (blueRatingAfter !== null) {
+      users[bluePlayer].ratings[gameType] = blueRatingAfter;
+      users[bluePlayer].rating = users[bluePlayer].ratings.hockey;
+    }
   }
 
   appendMatchRecord({
@@ -316,6 +383,11 @@ function applyPlayerRatingAndHistory(rs, bs, winSide) {
     bluePlayer,
     redScore: rs,
     blueScore: bs,
+    ratingGameType: gameType,
+    redRatingBefore,
+    blueRatingBefore,
+    redRatingAfter,
+    blueRatingAfter,
     redRatingChange,
     blueRatingChange,
     result,
@@ -375,12 +447,17 @@ function buildRankings() {
 }
 
 /** 选手积分排行（按积分从高到低，有积分的选手即可上榜） */
-function buildRatingRankings() {
+function buildRatingRankings(gameType = 'hockey') {
+  const normalizedGameType = normalizeGameType(gameType);
   return Object.values(users)
-    .filter(u => (u.rating ?? 0) > 0)
+    .map((u) => {
+      ensureUserRatings(u);
+      return u;
+    })
+    .filter(u => (u.ratings?.[normalizedGameType] ?? 0) > 0)
     .map(u => ({
       name: u.name,
-      rating: u.rating ?? DEFAULT_RATING,
+      rating: u.ratings?.[normalizedGameType] ?? DEFAULT_RATING,
     }))
     .sort((a, b) => b.rating - a.rating);
 }
@@ -404,6 +481,10 @@ app.post('/api/login', (req, res) => {
       coins: 100,
       totalWinnings: 0,
       rating: DEFAULT_RATING,
+      ratings: {
+        hockey: DEFAULT_RATING,
+        boxing: DEFAULT_RATING,
+      },
       lastCheckin: null,
       adWatchedToday: 0,
       lastAdDate: null,
@@ -411,7 +492,7 @@ app.post('/api/login', (req, res) => {
     };
     saveUsers(users);
   } else {
-    if (ensureUserRating(users[trimmed])) saveUsers(users);
+    if (ensureUserRatings(users[trimmed])) saveUsers(users);
   }
   res.json({ user: users[trimmed], gameInfo: buildGameInfo() });
 });
@@ -432,7 +513,7 @@ app.get('/api/server-info', (_req, res) => {
 app.get('/api/user/:name', (req, res) => {
   const user = users[req.params.name];
   if (!user) return res.status(404).json({ error: '用户不存在' });
-  if (ensureUserRating(user)) saveUsers(users);
+  if (ensureUserRatings(user)) saveUsers(users);
   res.json({ user });
 });
 
@@ -478,8 +559,9 @@ app.get('/api/rankings', (_req, res) => {
   res.json({ rankings: buildRankings() });
 });
 
-app.get('/api/rating-rankings', (_req, res) => {
-  res.json({ rankings: buildRatingRankings() });
+app.get('/api/rating-rankings', (req, res) => {
+  const gameType = normalizeGameType(req.query.gameType || gameState.gameType);
+  res.json({ gameType, rankings: buildRatingRankings(gameType) });
 });
 
 app.get('/api/game', (_req, res) => {
@@ -937,7 +1019,7 @@ io.on('connection', (socket) => {
     }
     gameState.status = 'settled';
 
-    const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+    const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
     const totalScore = rs + bs;
     const scoreDiff = Math.abs(rs - bs);
     let winSide = null;
@@ -1193,6 +1275,15 @@ io.on('connection', (socket) => {
     }
 
     if (betType === 'winBet') {
+      if (!gameState.redPlayer || !gameState.bluePlayer) {
+        socket.emit('bet:error', { message: '请先等待红蓝双方选手就位后，再进行胜负竞猜' });
+        return;
+      }
+      const restriction = getWinBetRestriction(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
+      if (!restriction.winBetEnabled) {
+        socket.emit('bet:error', { message: restriction.blockedReason });
+        return;
+      }
       if (side !== 'red' && side !== 'blue') {
         socket.emit('bet:error', { message: '请选择红方或蓝方' });
         return;
@@ -1427,7 +1518,7 @@ app.post('/api/admin/settle', (req, res) => {
   }
   gameState.status = 'settled';
 
-  const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer);
+  const odds = gameState.lockedOdds || getOddsByRating(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
   const totalScore = rs + bs;
   const scoreDiff = Math.abs(rs - bs);
   let winSide = null;

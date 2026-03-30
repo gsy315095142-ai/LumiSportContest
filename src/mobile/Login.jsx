@@ -43,7 +43,7 @@ function Login({ onLogin }) {
     <div className="mobile-login">
       <div className="login-card">
         <div className="login-logo">🏒</div>
-        <h1>魔法冰球竞猜</h1>
+        <h1>【竞技大空间竞猜】</h1>
         <p className="login-subtitle">输入账号即可参与竞猜</p>
         <form onSubmit={handleSubmit}>
           <input

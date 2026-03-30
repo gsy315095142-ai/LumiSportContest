@@ -342,6 +342,9 @@ function QuizPage({ user, setUser }) {
   const bluePlayer = gameInfo?.bluePlayer;
   const redRating = gameInfo?.redRating ?? 0;
   const blueRating = gameInfo?.blueRating ?? 0;
+  const winBetEnabled = gameInfo?.winBetEnabled !== false;
+  const winBetDisabledReason = gameInfo?.winBetDisabledReason || '';
+  const canWinBet = canBet && !!redPlayer && !!bluePlayer && winBetEnabled;
 
   // 已下注汇总
   let totalBetted = 0;
@@ -632,24 +635,29 @@ function QuizPage({ user, setUser }) {
           <div className="mq-bet-card">
             <h4>🏒 胜负竞猜 <span className="mq-bet-note">（只能猜单边）</span></h4>
             <p className="mq-bet-desc">猜测哪一方会赢得本场比赛</p>
+            {canBet && !canWinBet && (
+              <div className="mq-current-bet" style={{ marginBottom: 10 }}>
+                ⚠️ {winBetDisabledReason || (!redPlayer || !bluePlayer ? '请先等待红蓝双方选手就位后，再进行胜负竞猜' : '当前暂不开放胜负竞猜')}
+              </div>
+            )}
             <div className="mq-win-bet">
               <div className="mq-side-buttons">
                 <button
                   className={`mq-side-btn blue ${winSide === 'blue' ? 'selected' : ''}`}
-                  onClick={() => canBet && !myBets.winBet && setWinSide('blue')}
-                  disabled={!canBet || !!myBets.winBet}
+                  onClick={() => canWinBet && !myBets.winBet && setWinSide('blue')}
+                  disabled={!canWinBet || !!myBets.winBet}
                 >
                   🔵 蓝方胜 ×{odds.blue}
                 </button>
                 <button
                   className={`mq-side-btn red ${winSide === 'red' ? 'selected' : ''}`}
-                  onClick={() => canBet && !myBets.winBet && setWinSide('red')}
-                  disabled={!canBet || !!myBets.winBet}
+                  onClick={() => canWinBet && !myBets.winBet && setWinSide('red')}
+                  disabled={!canWinBet || !!myBets.winBet}
                 >
                   🔴 红方胜 ×{odds.red}
                 </button>
               </div>
-              {winSide && !myBets.winBet && canBet && (
+              {winSide && !myBets.winBet && canWinBet && (
                 <>
                   <div className="mq-bet-amount-row">
                     <label className="mq-amount-label">💰 押注金额</label>
@@ -673,13 +681,13 @@ function QuizPage({ user, setUser }) {
                   </div>
                 </>
               )}
-              {myBets.winBet && canBet && (
+              {myBets.winBet && canWinBet && (
                 <div className="mq-bet-locked-row">
                   <span className="mq-current-bet">✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {formatCoins(myBets.winBet.amount)} 币</span>
                   <button onClick={() => cancelBet('winBet')} className="mq-btn-cancel">取消</button>
                 </div>
               )}
-              {myBets.winBet && !canBet && (
+              {myBets.winBet && !canWinBet && (
                 <div className="mq-current-bet">
                   ✅ 已下注：{myBets.winBet.side === 'red' ? '红方' : '蓝方'} {formatCoins(myBets.winBet.amount)} 币
                 </div>

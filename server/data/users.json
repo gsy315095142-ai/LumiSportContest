@@ -148,7 +148,7 @@
         "balance": 338.2
       }
     ],
-    "rating": 1499,
+    "rating": 100,
     "history": [
       {
         "time": "2026-03-16T08:32:45.202Z",
@@ -301,7 +301,11 @@
           }
         ]
       }
-    ]
+    ],
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "Suki": {
     "name": "Suki",
@@ -319,7 +323,11 @@
         "balance": 100
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "Suyan": {
     "name": "Suyan",
@@ -453,7 +461,11 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "TK": {
     "name": "TK",
@@ -586,7 +598,11 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "LINP": {
     "name": "LINP",
@@ -713,7 +729,11 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "纽扣": {
     "name": "纽扣",
@@ -731,7 +751,11 @@
         "balance": 100
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "钰": {
     "name": "钰",
@@ -857,7 +881,11 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "Kimi": {
     "name": "Kimi",
@@ -951,7 +979,11 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "suyan": {
     "name": "suyan",
@@ -1069,13 +1101,17 @@
         ]
       }
     ],
-    "rating": 1500
+    "rating": 100,
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   },
   "虾饺": {
     "name": "虾饺",
     "coins": 98.3,
     "totalWinnings": 3.3000000000000003,
-    "rating": 1501,
+    "rating": 100,
     "lastCheckin": null,
     "adWatchedToday": 0,
     "lastAdDate": null,
@@ -1300,6 +1336,10 @@
           }
         ]
       }
-    ]
+    ],
+    "ratings": {
+      "hockey": 100,
+      "boxing": 100
+    }
   }
 }

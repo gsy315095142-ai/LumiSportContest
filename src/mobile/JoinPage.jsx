@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useMobileSocket } from './SocketContext.jsx';
 
 const GAME_TYPE_NAMES = { hockey: '魔法冰球', boxing: '魔法拳王' };
+const RANKING_MODE_NAMES = { hockey: '疾速冰球', boxing: '烈焰拳王' };
 
 function JoinPage({ user, setUser }) {
   const socket = useMobileSocket();
@@ -13,6 +14,18 @@ function JoinPage({ user, setUser }) {
   const [matchHistoryData, setMatchHistoryData] = useState([]);
   const [matchHistoryLoading, setMatchHistoryLoading] = useState(false);
   const [ratingRankings, setRatingRankings] = useState([]);
+  const [rankingGameType, setRankingGameType] = useState('hockey');
+  const hockeyRating = user?.ratings?.hockey ?? user?.rating ?? 100;
+  const boxingRating = user?.ratings?.boxing ?? user?.rating ?? 100;
+  const rankingPages = ['hockey', 'boxing'];
+  const rankingPageIndex = rankingPages.indexOf(rankingGameType);
+
+  const loadRatingRankings = useCallback((gameType) => {
+    fetch(`/api/rating-rankings?gameType=${encodeURIComponent(gameType)}`)
+      .then(r => r.json())
+      .then(data => setRatingRankings(data.rankings || []))
+      .catch(() => setRatingRankings([]));
+  }, []);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -37,17 +50,12 @@ function JoinPage({ user, setUser }) {
 
     const onGameUpdate = (info) => {
       setGameInfo(info);
-      if (info.status === 'settled') {
-        fetch('/api/rating-rankings')
-          .then(r => r.json())
-          .then(data => setRatingRankings(data.rankings || []))
-          .catch(() => {});
-      }
     };
 
     /** 与竞猜页一致：结算后服务端已更新 rating，需拉取用户对象才能刷新左上角积分 */
     const onGameResult = () => {
       refreshUser();
+      loadRatingRankings(rankingGameType);
     };
 
     const onContestUpdate = (status) => {
@@ -76,7 +84,7 @@ function JoinPage({ user, setUser }) {
       socket.off('contest:update', onContestUpdate);
       socket.off('contest:error', onContestError);
     };
-  }, [socket, user.name, refreshUser]);
+  }, [socket, user.name, refreshUser, loadRatingRankings, rankingGameType]);
 
   // 初始加载：从 REST 获取当前状态
   useEffect(() => {
@@ -116,11 +124,8 @@ function JoinPage({ user, setUser }) {
 
   // 加载选手积分排行
   useEffect(() => {
-    fetch('/api/rating-rankings')
-      .then(r => r.json())
-      .then(data => setRatingRankings(data.rankings || []))
-      .catch(() => setRatingRankings([]));
-  }, []);
+    loadRatingRankings(rankingGameType);
+  }, [rankingGameType, loadRatingRankings]);
 
   const handleConfirm = () => {
     if (!selectedSide) {
@@ -171,7 +176,8 @@ function JoinPage({ user, setUser }) {
       <div className="mq-header">
         <div className="mq-user-info">
           <span className="mq-username">👤 {user?.name}</span>
-          <span className="mq-rating">🏆 {user?.rating ?? 1500} 分</span>
+          <span className="mq-rating">🏒 {hockeyRating}</span>
+          <span className="mq-rating">🥊 {boxingRating}</span>
         </div>
         <div className="mq-actions">
           <div className="mq-actions-row">
@@ -300,6 +306,18 @@ function JoinPage({ user, setUser }) {
       {/* 选手积分名次 */}
       <div className="mq-rankings">
         <h4>🏅 选手积分名次</h4>
+        <div className="mq-side-buttons" style={{ marginBottom: 10 }}>
+          {rankingPages.map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`mq-side-btn ${type === 'hockey' ? 'blue' : 'red'} ${rankingGameType === type ? 'selected' : ''}`}
+              onClick={() => setRankingGameType(type)}
+            >
+              {RANKING_MODE_NAMES[type]}
+            </button>
+          ))}
+        </div>
         {ratingRankings.length === 0 ? (
           <p className="mq-empty">暂无排行数据</p>
         ) : (
