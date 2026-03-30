@@ -274,5 +274,22 @@
     "redRatingChange": 0,
     "blueRatingChange": 0,
     "result": "平局"
+  },
+  {
+    "time": "2026-03-30T05:41:34.553Z",
+    "matchName": "01",
+    "gameType": "hockey",
+    "redPlayer": null,
+    "bluePlayer": null,
+    "redScore": 25,
+    "blueScore": 23,
+    "ratingGameType": "hockey",
+    "redRatingBefore": null,
+    "blueRatingBefore": null,
+    "redRatingAfter": null,
+    "blueRatingAfter": null,
+    "redRatingChange": 0,
+    "blueRatingChange": 0,
+    "result": "平局"
   }
 ]

@@ -113,7 +113,25 @@ function getExpectedWinRate(myRating, enemyRating) {
   return my / total;
 }
 
+function isRobotPlayer(name) {
+  if (!name) return false;
+  const raw = String(name).trim();
+  // 机器人定义：只要当前选手名不在用户数据中，即视为机器人。
+  return !users[raw];
+}
+
 function getWinBetRestriction(redPlayer, bluePlayer, gameType) {
+  const redIsRobot = isRobotPlayer(redPlayer);
+  const blueIsRobot = isRobotPlayer(bluePlayer);
+  if (redIsRobot || blueIsRobot) {
+    return {
+      winBetEnabled: false,
+      blockedReason: '本场为机器人对局，暂不开放胜负竞猜，可参与趣味竞猜',
+      redWinRate: null,
+      blueWinRate: null,
+    };
+  }
+
   const redRating = getUserRating(redPlayer, gameType);
   const blueRating = getUserRating(bluePlayer, gameType);
   if (redRating === null || blueRating === null) {
