@@ -69,6 +69,11 @@ body.mobile-app-route #root {
   z-index: 1000;
 }
 
+.mobile-bottom-nav-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .mobile-nav-btn {
   display: flex;
   flex-direction: column;
@@ -483,7 +488,7 @@ body.mobile-app-route #root {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.8);
-  z-index: 999;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;

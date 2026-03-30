@@ -145,7 +145,10 @@ function MobileAppInner() {
             <JoinPage user={user} setUser={setUser} />
           )}
         </main>
-        <nav ref={bottomNavRef} className="mobile-bottom-nav mobile-bottom-nav-3col">
+        <nav
+          ref={bottomNavRef}
+          className={`mobile-bottom-nav mobile-bottom-nav-3col ${danmakuOpen ? 'mobile-bottom-nav-hidden' : ''}`}
+        >
           <button
             type="button"
             className={`mobile-nav-btn ${activeTab === 'quiz' ? 'active' : ''}`}
