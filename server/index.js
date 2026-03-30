@@ -52,6 +52,8 @@ const MIN_RATING = 1;
 const ODDS_FEE_RATE = 0.10;
 const SCORE_RATE = 0.05;
 const WIN_BET_BLOCK_WIN_RATE = 0.90;
+const MIN_WIN_BET_ODDS = 1.10;
+const MAX_WIN_BET_ODDS = 2.00;
 const GAME_TYPES = ['hockey', 'boxing'];
 
 function round2(x) {
@@ -175,9 +177,10 @@ function getOddsByRating(redPlayer, bluePlayer, gameType) {
   const blueWinRate = getExpectedWinRate(blueRating, redRating);
   const redOdds = (1 / redWinRate) * (1 - ODDS_FEE_RATE);
   const blueOdds = (1 / blueWinRate) * (1 - ODDS_FEE_RATE);
+  const clampOdds = (x) => Math.min(MAX_WIN_BET_ODDS, Math.max(MIN_WIN_BET_ODDS, x));
   return {
-    red: round2(redOdds),
-    blue: round2(blueOdds),
+    red: round2(clampOdds(redOdds)),
+    blue: round2(clampOdds(blueOdds)),
   };
 }
 
