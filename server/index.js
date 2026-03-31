@@ -50,8 +50,8 @@ let users = loadUsers();
 const DEFAULT_RATING = 100;
 const MIN_RATING = 1;
 const ODDS_FEE_RATE = 0.10;
-const SCORE_RATE = 0.05;
-const WIN_BET_BLOCK_WIN_RATE = 0.90;
+const SCORE_RATE = 20;
+const WIN_BET_BLOCK_WIN_RATE = 0.81;
 const MIN_WIN_BET_ODDS = 1.10;
 const MAX_WIN_BET_ODDS = 2.00;
 const GAME_TYPES = ['hockey', 'boxing'];
@@ -129,6 +129,7 @@ function getWinBetRestriction(redPlayer, bluePlayer, gameType) {
     return {
       winBetEnabled: false,
       blockedReason: '本场为机器人对局，暂不开放胜负竞猜，可参与趣味竞猜',
+      blockedType: 'robot',
       redWinRate: null,
       blueWinRate: null,
     };
@@ -140,6 +141,7 @@ function getWinBetRestriction(redPlayer, bluePlayer, gameType) {
     return {
       winBetEnabled: true,
       blockedReason: '',
+      blockedType: null,
       redWinRate: null,
       blueWinRate: null,
     };
@@ -149,7 +151,8 @@ function getWinBetRestriction(redPlayer, bluePlayer, gameType) {
   const blocked = redWinRate >= WIN_BET_BLOCK_WIN_RATE || blueWinRate >= WIN_BET_BLOCK_WIN_RATE;
   return {
     winBetEnabled: !blocked,
-    blockedReason: blocked ? '双方实力差距过大，本场暂不开放胜负竞猜，可参与趣味竞猜' : '',
+    blockedReason: blocked ? '[胜负悬殊]' : '',
+    blockedType: blocked ? 'lopsided' : null,
     redWinRate: round2(redWinRate),
     blueWinRate: round2(blueWinRate),
   };
@@ -263,6 +266,8 @@ function buildGameInfo() {
     isMasterMode: gameState.isMasterMode ?? true,
     winBetEnabled: winBetRestriction.winBetEnabled,
     winBetDisabledReason: winBetRestriction.blockedReason,
+    winBetBlockedType: winBetRestriction.blockedType,
+    hideWinOdds: winBetRestriction.blockedType === 'lopsided',
     redWinRate: winBetRestriction.redWinRate,
     blueWinRate: winBetRestriction.blueWinRate,
   };
@@ -356,26 +361,26 @@ function applyPlayerRatingAndHistory(rs, bs, winSide) {
   if (redPlayer && bluePlayer) {
     const redCurrent = getUserRating(redPlayer, gameType);
     const blueCurrent = getUserRating(bluePlayer, gameType);
-    const redWinRate = getExpectedWinRate(redCurrent, blueCurrent);
-    const blueWinRate = getExpectedWinRate(blueCurrent, redCurrent);
     redRatingBefore = redCurrent;
     blueRatingBefore = blueCurrent;
 
     if (winSide === 'red') {
-      // 红方赢：红方用“对手胜率/自己胜率”，蓝方输用“自己胜率/对手胜率”（两者在该场景下数值一致）
-      const ratio = blueWinRate / redWinRate;
-      const newRed = sanitizeRating(redCurrent * (1 + SCORE_RATE * ratio), redCurrent);
-      const newBlue = sanitizeRating(blueCurrent / (1 + SCORE_RATE * ratio), blueCurrent);
+      const sum = redCurrent + blueCurrent;
+      const redDelta = SCORE_RATE * (blueCurrent / sum);
+      const blueDelta = SCORE_RATE * (redCurrent / sum);
+      const newRed = sanitizeRating(redCurrent + redDelta, redCurrent);
+      const newBlue = sanitizeRating(blueCurrent - blueDelta, blueCurrent);
       redRatingAfter = Math.max(MIN_RATING, round2(newRed));
       blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
       redRatingChange = round2(redRatingAfter - redCurrent);
       blueRatingChange = round2(blueRatingAfter - blueCurrent);
       result = '红方胜';
     } else if (winSide === 'blue') {
-      // 蓝方赢：蓝方用“对手胜率/自己胜率”，红方输用“自己胜率/对手胜率”（两者在该场景下数值一致）
-      const ratio = redWinRate / blueWinRate;
-      const newRed = sanitizeRating(redCurrent / (1 + SCORE_RATE * ratio), redCurrent);
-      const newBlue = sanitizeRating(blueCurrent * (1 + SCORE_RATE * ratio), blueCurrent);
+      const sum = redCurrent + blueCurrent;
+      const redDelta = SCORE_RATE * (blueCurrent / sum);
+      const blueDelta = SCORE_RATE * (redCurrent / sum);
+      const newRed = sanitizeRating(redCurrent - redDelta, redCurrent);
+      const newBlue = sanitizeRating(blueCurrent + blueDelta, blueCurrent);
       redRatingAfter = Math.max(MIN_RATING, round2(newRed));
       blueRatingAfter = Math.max(MIN_RATING, round2(newBlue));
       redRatingChange = round2(redRatingAfter - redCurrent);
