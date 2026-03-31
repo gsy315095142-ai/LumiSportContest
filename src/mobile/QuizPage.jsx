@@ -348,6 +348,7 @@ function QuizPage({ user, setUser }) {
   const winBetEnabled = gameInfo?.winBetEnabled !== false;
   const winBetDisabledReason = gameInfo?.winBetDisabledReason || '';
   const hideWinOdds = gameInfo?.hideWinOdds === true;
+  const winOddsDisplayText = gameInfo?.winOddsDisplayText || '暂无赔率';
   const canWinBet = canBet && !!redPlayer && !!bluePlayer && winBetEnabled;
 
   // 已下注汇总
@@ -538,7 +539,7 @@ function QuizPage({ user, setUser }) {
                   <div className="mq-player-label">🔵 蓝方</div>
                   <div className="mq-player-name">{bluePlayer || '等待选手报名'}</div>
                   <div className="mq-player-rating">{blueRating}分</div>
-                  <div className="mq-odds-tag">{hideWinOdds ? '[胜负悬殊]' : `赔率 ×${odds.blue}`}</div>
+                  <div className="mq-odds-tag">{hideWinOdds ? winOddsDisplayText : `赔率 ×${odds.blue}`}</div>
                 </div>
               </div>
               <span className="mq-vs-sep mq-vs-gold">VS</span>
@@ -547,7 +548,7 @@ function QuizPage({ user, setUser }) {
                   <div className="mq-player-label">🔴 红方</div>
                   <div className="mq-player-name">{redPlayer || '等待选手报名'}</div>
                   <div className="mq-player-rating">{redRating}分</div>
-                  <div className="mq-odds-tag">{hideWinOdds ? '[胜负悬殊]' : `赔率 ×${odds.red}`}</div>
+                  <div className="mq-odds-tag">{hideWinOdds ? winOddsDisplayText : `赔率 ×${odds.red}`}</div>
                 </div>
               </div>
             </div>
@@ -651,14 +652,14 @@ function QuizPage({ user, setUser }) {
                   onClick={() => canWinBet && !myBets.winBet && setWinSide('blue')}
                   disabled={!canWinBet || !!myBets.winBet}
                 >
-                  {hideWinOdds ? '🔵 蓝方胜 [胜负悬殊]' : `🔵 蓝方胜 ×${odds.blue}`}
+                  {hideWinOdds ? `🔵 蓝方胜 ${winOddsDisplayText}` : `🔵 蓝方胜 ×${odds.blue}`}
                 </button>
                 <button
                   className={`mq-side-btn red ${winSide === 'red' ? 'selected' : ''}`}
                   onClick={() => canWinBet && !myBets.winBet && setWinSide('red')}
                   disabled={!canWinBet || !!myBets.winBet}
                 >
-                  {hideWinOdds ? '🔴 红方胜 [胜负悬殊]' : `🔴 红方胜 ×${odds.red}`}
+                  {hideWinOdds ? `🔴 红方胜 ${winOddsDisplayText}` : `🔴 红方胜 ×${odds.red}`}
                 </button>
               </div>
               {winSide && !myBets.winBet && canWinBet && (

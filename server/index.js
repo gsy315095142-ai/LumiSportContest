@@ -253,6 +253,16 @@ function buildGameInfo() {
   const redRating = gameState.redPlayer ? getUserRating(gameState.redPlayer, gameState.gameType) : null;
   const blueRating = gameState.bluePlayer ? getUserRating(gameState.bluePlayer, gameState.gameType) : null;
   const winBetRestriction = getWinBetRestriction(gameState.redPlayer, gameState.bluePlayer, gameState.gameType);
+  const hasBothPlayerData = redRating !== null && blueRating !== null;
+  let hideWinOdds = false;
+  let winOddsDisplayText = '';
+  if (!hasBothPlayerData || winBetRestriction.blockedType === 'robot') {
+    hideWinOdds = true;
+    winOddsDisplayText = '暂无赔率';
+  } else if (winBetRestriction.blockedType === 'lopsided') {
+    hideWinOdds = true;
+    winOddsDisplayText = '[胜负悬殊]';
+  }
   const info = {
     status: gameState.status,
     gameType: gameState.gameType,
@@ -267,7 +277,8 @@ function buildGameInfo() {
     winBetEnabled: winBetRestriction.winBetEnabled,
     winBetDisabledReason: winBetRestriction.blockedReason,
     winBetBlockedType: winBetRestriction.blockedType,
-    hideWinOdds: winBetRestriction.blockedType === 'lopsided',
+    hideWinOdds,
+    winOddsDisplayText,
     redWinRate: winBetRestriction.redWinRate,
     blueWinRate: winBetRestriction.blueWinRate,
   };

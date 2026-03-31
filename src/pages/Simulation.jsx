@@ -137,6 +137,7 @@ function Simulation() {
   // 当前赔率与选手（由服务端按积分计算）
   const odds = gameInfo?.odds || { red: 1.5, blue: 1.5 };
   const hideWinOdds = gameInfo?.hideWinOdds === true;
+  const winOddsDisplayText = gameInfo?.winOddsDisplayText || '暂无赔率';
   const redPlayer = gameInfo?.redPlayer;
   const bluePlayer = gameInfo?.bluePlayer;
   const redRating = gameInfo?.redRating ?? 0;
@@ -242,7 +243,7 @@ function Simulation() {
                 <div className="sim-player-label">🔵 蓝方</div>
                 <div className="sim-player-name">{bluePlayer || '等待选手报名'}</div>
                 <div className="sim-player-rating">{blueRating}分</div>
-                <div className="sim-odds-tag">{hideWinOdds ? '[胜负悬殊]' : `×${odds.blue}`}</div>
+                <div className="sim-odds-tag">{hideWinOdds ? winOddsDisplayText : `×${odds.blue}`}</div>
               </div>
             </div>
             <span className="sim-vs-sep sim-vs-gold">VS</span>
@@ -251,7 +252,7 @@ function Simulation() {
                 <div className="sim-player-label">🔴 红方</div>
                 <div className="sim-player-name">{redPlayer || '等待选手报名'}</div>
                 <div className="sim-player-rating">{redRating}分</div>
-                <div className="sim-odds-tag">{hideWinOdds ? '[胜负悬殊]' : `×${odds.red}`}</div>
+                <div className="sim-odds-tag">{hideWinOdds ? winOddsDisplayText : `×${odds.red}`}</div>
               </div>
             </div>
             <p className="sim-odds-hint">选手由手机端【我要参赛】确认，赔率按积分自动计算</p>
