@@ -54,7 +54,7 @@ const SCORE_RATE = 20;
 const WIN_BET_BLOCK_WIN_RATE = 0.81;
 const MIN_WIN_BET_ODDS = 1.10;
 const MAX_WIN_BET_ODDS = 2.00;
-const GAME_TYPES = ['hockey', 'boxing'];
+const GAME_TYPES = ['hockey', 'boxing', 'fencing'];
 
 function round2(x) {
   return Math.round(Number(x) * 100) / 100;
@@ -973,7 +973,7 @@ io.on('connection', (socket) => {
     if (gameState.status === 'started' || gameState.status === 'settled') return;
     const { matchName, gameType, isMasterMode } = data;
     if (matchName !== undefined) gameState.matchName = matchName;
-    if (gameType && (gameType === 'hockey' || gameType === 'boxing')) gameState.gameType = gameType;
+    if (gameType && (gameType === 'hockey' || gameType === 'boxing' || gameType === 'fencing')) gameState.gameType = gameType;
     if (isMasterMode !== undefined) gameState.isMasterMode = !!isMasterMode;
     io.emit('game:update', buildGameInfo());
   });
@@ -1004,6 +1004,7 @@ io.on('connection', (socket) => {
 
     const { redScore, blueScore, iceBalls, fireBalls, windBalls, totalKnockdowns } = data;
     const isHockey = gameState.gameType === 'hockey';
+    const isBoxing = gameState.gameType === 'boxing';
     const missing = [];
     if (redScore === '' || redScore === undefined || redScore === null) missing.push('红方分数');
     if (blueScore === '' || blueScore === undefined || blueScore === null) missing.push('蓝方分数');
@@ -1012,7 +1013,7 @@ io.on('connection', (socket) => {
       if (iceBalls === '' || iceBalls === undefined || iceBalls === null) missing.push('冰球次数');
       if (fireBalls === '' || fireBalls === undefined || fireBalls === null) missing.push('火球次数');
       if (windBalls === '' || windBalls === undefined || windBalls === null) missing.push('风球次数');
-    } else if (!isHockey) {
+    } else if (isBoxing) {
       if (totalKnockdowns === '' || totalKnockdowns === undefined || totalKnockdowns === null) missing.push('倒地次数总和');
     }
     if (missing.length > 0) {
@@ -1035,7 +1036,7 @@ io.on('connection', (socket) => {
       if (ice === maxElem) elementWinner = 'ice';
       else if (fire === maxElem) elementWinner = 'fire';
       else elementWinner = 'wind';
-    } else if (!isHockey) {
+    } else if (isBoxing) {
       knockdowns = parseInt(totalKnockdowns);
     }
 
@@ -1070,7 +1071,7 @@ io.on('connection', (socket) => {
       let totalBetted = 0;
       if (bet.winBet && bet.winBet.amount > 0) totalBetted += bet.winBet.amount;
       if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
-      if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
+      if (isBoxing && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
       if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
       if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
 
@@ -1110,7 +1111,7 @@ io.on('connection', (socket) => {
       }
 
       // 躺平之王（仅拳王模式）：猜中倒地次数总和，赔率 ×3
-      if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) {
+      if (isBoxing && bet.knockdownKing && bet.knockdownKing.amount > 0) {
         const myLabel = `${bet.knockdownKing.value} 次`;
         const actualLabel = `${knockdowns} 次`;
         if (parseInt(bet.knockdownKing.value) === knockdowns) {
@@ -1332,6 +1333,10 @@ io.on('connection', (socket) => {
       }
       myBets.elementKing = { choice, amount: amt };
     } else if (betType === 'knockdownKing') {
+      if (gameState.gameType !== 'boxing') {
+        socket.emit('bet:error', { message: '当前玩法不支持躺平之王竞猜' });
+        return;
+      }
       if (value === undefined || value === '' || parseInt(value) < 0) {
         socket.emit('bet:error', { message: '请输入有效的倒地次数预测' });
         return;
@@ -1462,7 +1467,7 @@ app.post('/api/admin/configure', (req, res) => {
   gameState.round = nextRound;
 
   if (matchName) gameState.matchName = matchName;
-  if (gameType && (gameType === 'hockey' || gameType === 'boxing')) gameState.gameType = gameType;
+  if (gameType && (gameType === 'hockey' || gameType === 'boxing' || gameType === 'fencing')) gameState.gameType = gameType;
   if (isMasterMode !== undefined) gameState.isMasterMode = !!isMasterMode;
 
   ensureDefaultMatchName();
@@ -1502,6 +1507,7 @@ app.post('/api/admin/settle', (req, res) => {
 
   const { redScore, blueScore, iceBalls, fireBalls, windBalls, totalKnockdowns } = req.body;
   const isHockey = gameState.gameType === 'hockey';
+  const isBoxing = gameState.gameType === 'boxing';
   const isMasterMode = gameState.isMasterMode ?? true;
 
   // 校验必填字段
@@ -1512,7 +1518,7 @@ app.post('/api/admin/settle', (req, res) => {
     if (iceBalls === undefined || iceBalls === null) missing.push('冰球次数');
     if (fireBalls === undefined || fireBalls === null) missing.push('火球次数');
     if (windBalls === undefined || windBalls === null) missing.push('风球次数');
-  } else if (!isHockey) {
+  } else if (isBoxing) {
     if (totalKnockdowns === undefined || totalKnockdowns === null) missing.push('倒地次数');
   }
   if (missing.length > 0) {
@@ -1534,7 +1540,7 @@ app.post('/api/admin/settle', (req, res) => {
     if (ice === maxElem) elementWinner = 'ice';
     else if (fire === maxElem) elementWinner = 'fire';
     else elementWinner = 'wind';
-  } else if (!isHockey) {
+  } else if (isBoxing) {
     knockdowns = parseInt(totalKnockdowns);
   }
 
@@ -1568,7 +1574,7 @@ app.post('/api/admin/settle', (req, res) => {
     let totalBetted = 0;
     if (bet.winBet && bet.winBet.amount > 0) totalBetted += bet.winBet.amount;
     if (isHockey && isMasterMode && bet.elementKing && bet.elementKing.amount > 0) totalBetted += bet.elementKing.amount;
-    if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
+    if (isBoxing && bet.knockdownKing && bet.knockdownKing.amount > 0) totalBetted += bet.knockdownKing.amount;
     if (bet.preciseTotal && bet.preciseTotal.amount > 0) totalBetted += bet.preciseTotal.amount;
     if (bet.preciseDiff && bet.preciseDiff.amount > 0) totalBetted += bet.preciseDiff.amount;
 
@@ -1605,7 +1611,7 @@ app.post('/api/admin/settle', (req, res) => {
       }
     }
 
-    if (!isHockey && bet.knockdownKing && bet.knockdownKing.amount > 0) {
+    if (isBoxing && bet.knockdownKing && bet.knockdownKing.amount > 0) {
       const myLabel = `${bet.knockdownKing.value} 次`;
       const actualLabel = `${knockdowns} 次`;
       if (parseInt(bet.knockdownKing.value) === knockdowns) {

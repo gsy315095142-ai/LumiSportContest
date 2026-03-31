@@ -132,6 +132,7 @@ function Simulation() {
 
   const activeGameType = gameInfo?.gameType || gameType;
   const isHockey = activeGameType === 'hockey';
+  const isBoxing = activeGameType === 'boxing';
 
   // 当前赔率与选手（由服务端按积分计算）
   const odds = gameInfo?.odds || { red: 1.5, blue: 1.5 };
@@ -219,6 +220,7 @@ function Simulation() {
             >
               <option value="hockey">🏒 魔法冰球</option>
               <option value="boxing">🥊 魔法拳王</option>
+              <option value="fencing">🤺 雷霆击剑</option>
             </select>
           </div>
 
@@ -282,12 +284,12 @@ function Simulation() {
                 <input type="number" min="0" value={windBalls} onChange={e => setWindBalls(e.target.value)} disabled={status !== 'started'} />
               </div>
             </>
-          ) : (
+          ) : isBoxing ? (
             <div className="sim-form-row">
               <label>🤸 双方倒地次数总和</label>
               <input type="number" min="0" value={totalKnockdowns} onChange={e => setTotalKnockdowns(e.target.value)} disabled={status !== 'started'} />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* 操作按钮 */}
@@ -343,7 +345,9 @@ function Simulation() {
             <span>胜方：{resultData.winSide === 'blue' ? '🔵 蓝方' : resultData.winSide === 'red' ? '🔴 红方' : '⚖️ 平局'}</span>
             {resultData.gameType === 'hockey'
               ? <span>元素之王：{{ ice: '❄️ 冰球', fire: '🔥 火球', wind: '🌪️ 风球' }[resultData.elementWinner]}</span>
-              : <span>倒地次数总和：{resultData.totalKnockdowns}</span>
+              : resultData.gameType === 'boxing'
+                ? <span>倒地次数总和：{resultData.totalKnockdowns}</span>
+                : null
             }
             <span>总分：{resultData.totalScore} | 分差：{resultData.scoreDiff}</span>
           </div>
@@ -392,9 +396,9 @@ function Simulation() {
                 <BetCategory title="❄️🔥🌪️ 元素之王 - 火球" data={betSummary.elementKing.fire} />
                 <BetCategory title="❄️🔥🌪️ 元素之王 - 风球" data={betSummary.elementKing.wind} />
               </>
-            ) : (
+            ) : isBoxing ? (
               <BetCategoryWithValue title="🤸 躺平之王" data={betSummary.knockdownKing} />
-            )}
+            ) : null}
             <BetCategoryWithValue title="🎯 精准总分" data={betSummary.preciseTotal} />
             <BetCategoryWithValue title="📊 精准分差" data={betSummary.preciseDiff} />
           </div>

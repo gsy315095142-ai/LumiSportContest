@@ -337,7 +337,10 @@ function QuizPage({ user, setUser }) {
   const amIParticipating = gameInfo?.redPlayer === user?.name || gameInfo?.bluePlayer === user?.name;
   const canBet = status === 'betting' && !amIParticipating;
   const odds = gameInfo?.odds || { red: 1.5, blue: 1.5 };
-  const isHockey = (gameInfo?.gameType || 'hockey') === 'hockey';
+  const activeGameType = gameInfo?.gameType || 'hockey';
+  const isHockey = activeGameType === 'hockey';
+  const isBoxing = activeGameType === 'boxing';
+  const gameTypeIcon = activeGameType === 'hockey' ? '🏒' : activeGameType === 'boxing' ? '🥊' : '🤺';
   const redPlayer = gameInfo?.redPlayer;
   const bluePlayer = gameInfo?.bluePlayer;
   const redRating = gameInfo?.redRating ?? 0;
@@ -449,7 +452,7 @@ function QuizPage({ user, setUser }) {
                       </span>
                     </div>
                     <div className="mq-history-match">
-                      {h.gameType === 'hockey' ? '🏒' : '🥊'} {h.matchName}
+                      {h.gameType === 'hockey' ? '🏒' : h.gameType === 'boxing' ? '🥊' : '🤺'} {h.matchName}
                       <span className="mq-history-vs">🔵{h.bluePlayer || '—'} {h.blueScore} : {h.redScore} {h.redPlayer || '—'}🔴</span>
                     </div>
                     {h.details && h.details.length > 0 && (
@@ -528,7 +531,7 @@ function QuizPage({ user, setUser }) {
         {status === 'waiting' && <div className="mq-status-msg">⏳ 等待主持人配置比赛...</div>}
         {status !== 'waiting' && (
           <>
-            <div className="mq-match-name">{isHockey ? '🏒' : '🥊'} {gameInfo?.matchName || '竞猜赛事'}</div>
+            <div className="mq-match-name">{gameTypeIcon} {gameInfo?.matchName || '竞猜赛事'}</div>
             <div className="mq-players-odds">
               <div className="mq-player-box blue">
                 <div className="mq-player-side blue">
@@ -551,7 +554,7 @@ function QuizPage({ user, setUser }) {
           </>
         )}
         {status === 'betting' && <div className="mq-status-msg betting">🎯 下注中 — 请在比赛开始前完成下注</div>}
-        {status === 'started' && <div className="mq-status-msg started">{isHockey ? '🏒' : '🥊'} 比赛进行中 — 下注已锁定</div>}
+        {status === 'started' && <div className="mq-status-msg started">{gameTypeIcon} 比赛进行中 — 下注已锁定</div>}
         {status === 'settled' && <div className="mq-status-msg settled">🏆 已开奖</div>}
         {amIParticipating && status === 'betting' && (
           <div className="mq-participant-block">
@@ -574,7 +577,7 @@ function QuizPage({ user, setUser }) {
             <span>胜方：{(effectiveResult?.winSide ?? gameInfo?.winSide) === 'blue' ? '蓝方' : (effectiveResult?.winSide ?? gameInfo?.winSide) === 'red' ? '红方' : '平局'}</span>
             {(effectiveResult?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
               ? <span>元素之王：{{ ice: '❄️ 冰', fire: '🔥 火', wind: '🌪️ 风' }[effectiveResult?.elementWinner] ?? '—'}</span>
-              : (effectiveResult?.gameType ?? gameInfo?.gameType) !== 'hockey'
+              : (effectiveResult?.gameType ?? gameInfo?.gameType) === 'boxing'
                 ? <span>倒地总和：{effectiveResult?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</span>
                 : null
             }
@@ -585,7 +588,7 @@ function QuizPage({ user, setUser }) {
               <div className="mq-result-actual-item">胜负：{(effectiveResult?.winSide ?? gameInfo?.winSide) === 'red' ? '🔴 红方胜' : (effectiveResult?.winSide ?? gameInfo?.winSide) === 'blue' ? '🔵 蓝方胜' : '⚖️ 平局'}</div>
               {(effectiveResult?.gameType ?? gameInfo?.gameType) === 'hockey' && gameInfo?.isMasterMode !== false
                 ? <div className="mq-result-actual-item">元素之王：{{ ice: '❄️ 冰球', fire: '🔥 火球', wind: '🌪️ 风球' }[effectiveResult?.elementWinner] ?? '—'}</div>
-                : (effectiveResult?.gameType ?? gameInfo?.gameType) !== 'hockey'
+                : (effectiveResult?.gameType ?? gameInfo?.gameType) === 'boxing'
                   ? <div className="mq-result-actual-item">倒地总和：{effectiveResult?.totalKnockdowns ?? gameInfo?.totalKnockdowns ?? '—'} 次</div>
                   : null
               }
@@ -754,7 +757,7 @@ function QuizPage({ user, setUser }) {
                 </div>
               )}
             </div>
-          ) : !isHockey ? (
+          ) : isBoxing ? (
             <div className="mq-bet-card">
               <h4>🤸 躺平之王 <span className="mq-bet-odds">赔率 ×3</span></h4>
               <p className="mq-bet-desc">竞猜本场双方倒地次数总和</p>

@@ -304,7 +304,8 @@
     ],
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "Suki": {
@@ -326,7 +327,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "Suyan": {
@@ -464,7 +466,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "TK": {
@@ -601,7 +604,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "LINP": {
@@ -732,7 +736,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "纽扣": {
@@ -754,7 +759,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "钰": {
@@ -884,7 +890,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "Kimi": {
@@ -982,7 +989,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "suyan": {
@@ -1104,7 +1112,8 @@
     "rating": 100,
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   },
   "虾饺": {
@@ -1339,7 +1348,8 @@
     ],
     "ratings": {
       "hockey": 100,
-      "boxing": 100
+      "boxing": 100,
+      "fencing": 100
     }
   }
 }

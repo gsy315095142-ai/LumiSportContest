@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMobileSocket } from './SocketContext.jsx';
 
-const GAME_TYPE_NAMES = { hockey: '魔法冰球', boxing: '魔法拳王' };
-const RANKING_MODE_NAMES = { hockey: '疾速冰球', boxing: '烈焰拳王' };
+const GAME_TYPE_NAMES = { hockey: '魔法冰球', boxing: '魔法拳王', fencing: '雷霆击剑' };
+const RANKING_MODE_NAMES = { hockey: '疾速冰球', boxing: '烈焰拳王', fencing: '雷霆击剑' };
 
 function JoinPage({ user, setUser }) {
   const socket = useMobileSocket();
@@ -17,7 +17,8 @@ function JoinPage({ user, setUser }) {
   const [rankingGameType, setRankingGameType] = useState('hockey');
   const hockeyRating = user?.ratings?.hockey ?? user?.rating ?? 100;
   const boxingRating = user?.ratings?.boxing ?? user?.rating ?? 100;
-  const rankingPages = ['hockey', 'boxing'];
+  const fencingRating = user?.ratings?.fencing ?? user?.rating ?? 100;
+  const rankingPages = ['hockey', 'boxing', 'fencing'];
   const rankingPageIndex = rankingPages.indexOf(rankingGameType);
 
   const loadRatingRankings = useCallback((gameType) => {
@@ -178,6 +179,7 @@ function JoinPage({ user, setUser }) {
           <span className="mq-username">👤 {user?.name}</span>
           <span className="mq-rating">🏒 {hockeyRating}</span>
           <span className="mq-rating">🥊 {boxingRating}</span>
+          <span className="mq-rating">🤺 {fencingRating}</span>
         </div>
         <div className="mq-actions">
           <div className="mq-actions-row">
@@ -201,7 +203,7 @@ function JoinPage({ user, setUser }) {
         )}
         {status !== 'waiting' && (
           <div className="mq-game-type-badge" style={{ marginBottom: 16 }}>
-            {(gameInfo?.gameType === 'hockey' ? '🏒' : '🥊')} {gameTypeName}
+            {(gameInfo?.gameType === 'hockey' ? '🏒' : gameInfo?.gameType === 'boxing' ? '🥊' : '🤺')} {gameTypeName}
           </div>
         )}
 
@@ -254,7 +256,7 @@ function JoinPage({ user, setUser }) {
 
         {!canOperate ? (
           <div className={`mq-status-msg mq-join-status ${status}`} style={{ marginTop: 8, display: 'block', width: '100%', textAlign: 'center' }}>
-            {status === 'started' ? `${gameInfo?.gameType === 'boxing' ? '🥊' : '🏒'} 比赛进行中` : statusMsg}
+            {status === 'started' ? `${gameInfo?.gameType === 'hockey' ? '🏒' : gameInfo?.gameType === 'boxing' ? '🥊' : '🤺'} 比赛进行中` : statusMsg}
           </div>
         ) : (
           <>
@@ -311,10 +313,10 @@ function JoinPage({ user, setUser }) {
             <button
               key={type}
               type="button"
-              className={`mq-side-btn ${type === 'hockey' ? 'blue' : 'red'} ${rankingGameType === type ? 'selected' : ''}`}
+              className={`mq-side-btn ${type === 'hockey' ? 'blue' : type === 'boxing' ? 'red' : ''} ${rankingGameType === type ? 'selected' : ''}`}
               onClick={() => setRankingGameType(type)}
             >
-              {RANKING_MODE_NAMES[type]}
+              {(type === 'hockey' ? '🏒 ' : type === 'boxing' ? '🥊 ' : '🤺 ')}{RANKING_MODE_NAMES[type]}
             </button>
           ))}
         </div>
@@ -365,7 +367,7 @@ function JoinPage({ user, setUser }) {
                       <span className="mq-history-won">{m.result}</span>
                     </div>
                     <div className="mq-history-match">
-                      {(m.gameType === 'hockey' ? '🏒' : '🥊')} {m.matchName || '赛事'}
+                      {(m.gameType === 'hockey' ? '🏒' : m.gameType === 'boxing' ? '🥊' : '🤺')} {m.matchName || '赛事'}
                       <span className="mq-history-vs">{vs}</span>
                     </div>
                     <div className="mq-match-score">比分 {score}</div>
